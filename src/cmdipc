@@ -1,0 +1,104 @@
+#!/usr/bin/env python3
+# -*- python -*-
+copyright='''
+cmdipc — System V and POSIX IPC from the command line
+Copyright © 2014  Mattias Andrée (maandree@member.fsf.org)
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+'''
+
+import sys
+
+from argparser import ArgParser
+import sysv_ipc
+import posix_ipc
+
+
+parser = ArgParser('System V and POSIX IPC from the command line',
+                   '\n'.join(['%s -Q [options]' % sys.argv[0],
+                              '%s -Q [options] send [--] message' % sys.argv[0],
+                              '%s -Q [options] receive' % sys.argv[0]]),
+                   None, None, True, ArgParser.standard_abbreviations())
+
+
+parser.add_argumentless(['-h', '-?', '--help'],  0,          'Prints this help message and exits')
+#parser.add_argumentless(['-p', '--posix'],       0,          'Use POSIX IPC rather than System V IPC')
+parser.add_argumented  (['-k', '--key'],         0, 'KEY',   'The key (SysV) or name (POSIX) of the item')
+parser.add_argumented  (['-m', '--mode'],        0, 'OCTAL', 'The mode for the item')
+parser.add_argumented  (['-s', '--size'],        0, 'SIZE',  'Maximum size for messages')
+parser.add_argumented  (['-t', '--type'],        0, 'TYPE',  'Message type')
+parser.add_argumentless(['-r', '--remove'],      0,          'Remove unit')
+parser.add_argumentless(['-n', '--nonblocking'], 0,          'Do not block, exit with 2 if busy')
+parser.add_argumentless(['-c', '--create'],      0,          'Create item')
+parser.add_argumentless(['-x', '--exclusive'],   0,          'Create exclusive item')
+parser.add_argumentless(['-Q', '--mqueue'],      0,          'Use message queue')
+#parser.add_argumentless(['-S', '--semaphore'],  0,          'Use semaphore')
+#parser.add_argumentless(['-M', '--shm'],        0,          'Use shared memory')
+
+
+parser.parse()
+parser.support_alternatives()
+
+if parser.opts['--help'] is not None:
+    parser.help()
+    sys.exit(0)
+
+
+try:
+    if parser.opts['--mqueue'] is not None:
+        key, flags, mode, size, type = None, 0, 0o600, 2048, None
+        block = parser.opts['--nonblocking'] is None
+        if parser.opts['--key']       is not None:  key = int(parser.opts['--key'][0])
+        if parser.opts['--create']    is not None:  flags = sysv_ipc.IPC_CREAT
+        if parser.opts['--exclusive'] is not None:  flags = sysv_ipc.IPC_CREAT | sysv_ipc.IPC_EXCL
+        if parser.opts['--mode']      is not None:  mode = int(parser.opts['--mode'][0], 8)
+        if parser.opts['--size']      is not None:  size = int(parser.opts['--size'][0])
+        if parser.opts['--type']      is not None:  type = int(parser.opts['--type'][0])
+        q = sysv_ipc.MessageQueue(key, flags, mode, size)
+        if key is None:
+            print('key: %i' % q.key)
+        nocmd = False
+        if (len(parser.files) > 1) and (parser.files[0] == 'send'):
+            if type is None:
+                type = 1
+            q.send(' '.join(parser.files[1:]), block, type)
+        elif (len(parser.files) == 1) and (parser.files[0] == 'receive'):
+            if type is None:
+                type = 0
+            (message, type) = q.receive(block, type)
+            print('type: %i' % type)
+            print('length: %i' % len(message))
+            sys.stdout.buffer.write(message)
+            sys.stdout.buffer.write(b'\n')
+            sys.stdout.buffer.flush()
+        elif key is not None:
+            nocmd = True
+        if parser.opts['--remove'] is not None:
+            q.remove()
+        elif nocmd:
+            print('Invalid command given', file = sys.stderr)
+            sys.exit(1)
+    else:
+        print('No command given', file = sys.stderr)
+        sys.exit(1)
+
+except posix_ipc.SignalError:       sys.exit(5)
+except  sysv_ipc.PermissionsError:  sys.exit(4)
+except posix_ipc.PermissionsError:  sys.exit(4)
+except  sysv_ipc.ExistentialError:  sys.exit(3)
+except posix_ipc.ExistentialError:  sys.exit(3)
+except  sysv_ipc.BusyError:         sys.exit(2)
+except posix_ipc.BusyError:         sys.exit(2)
+except:                             sys.exit(1)
+
