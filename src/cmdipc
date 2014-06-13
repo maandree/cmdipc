@@ -204,10 +204,11 @@ try:
         if key[0] is None:
             print('key: %i.%i.%i' % (s.key, c.key, q.key))
         nocmd = False
+        s_, c_, q_ = s.value, c.value, q.value
         if len(parser.files) == 1:
             if   parser.files[0] == 'enter':      s.P(timeout)
             elif parser.files[0] == 'leave':      s.V()
-            elif parser.files[0] == 'wait':       c.V() ; s.V() ; q.P(timeout) ; s.P(timeout) ; c.P()
+            elif parser.files[0] == 'wait':       s.V() ; c.V() ; q.P(timeout) ; c.P(timeout) ; s.P(timeout)
             elif parser.files[0] == 'notify':     q.V()
             elif parser.files[0] == 'broadcast':
                 for _ in range(c.value):
@@ -215,10 +216,11 @@ try:
             elif key[0] is not None:
                 nocmd = True
         elif (len(parser.files) == 2) and (parser.files[0] == 'notify') and (parser.files[1] == 'all'):
-            for _ in range(min(c.value, 1)):
+            for _ in range(max(c.value, 1)):
                 q.V()
         elif key[0] is not None:
             nocmd = True
+        print('s: %i → %i\nc: %i → %i\nq: %i → %i\n' % (s_, s.value, c_, c.value, q_, q.value))
         if parser.opts['--remove'] is not None:
             s.remove()
             c.remove()
