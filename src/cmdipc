@@ -52,13 +52,15 @@ parser.add_argumented  (['-t', '--type'],        0, 'TYPE',  'Message type')
 parser.add_argumented  (['-d', '--delta'],       0, 'DELTA', 'Semaphore value increment')
 parser.add_argumented  (['-i', '--initial'],     0, 'VALUE', 'Initial semaphore value')
 parser.add_argumented  (['-b', '--timeout'],     0, 'SECS',  'Semaphore V/Z timeout, in seconds')
+parser.add_argumented  (['-l', '--length'],      0, 'LEN',   'Shared memory read length')
+parser.add_argumented  (['-o', '--offset'],      0, 'OFF',   'Shared memory read/write offset')
 parser.add_argumentless(['-r', '--remove'],      0,          'Remove unit')
 parser.add_argumentless(['-n', '--nonblocking'], 0,          'Do not block, exit with 2 if busy')
 parser.add_argumentless(['-c', '--create'],      0,          'Create item')
 parser.add_argumentless(['-x', '--exclusive'],   0,          'Create exclusive item')
 parser.add_argumentless(['-Q', '--mqueue'],      0,          'Use message queue')
 parser.add_argumentless(['-S', '--semaphore'],   0,          'Use semaphore')
-#parser.add_argumentless(['-M', '--shm'],         0,          'Use shared memory')
+parser.add_argumentless(['-M', '--shm'],         0,          'Use shared memory')
 parser.add_argumentless(['-X', '--mutex'],       0,          'Use mutex (using semaphore)')
 parser.add_argumentless(['-C', '--condition'],   0,          'Use condition (non-primitive)')
 #parser.add_argumentless(['-B', '--barrier'],     0,          'Use barrier (non-primitive)')
@@ -91,7 +93,7 @@ try:
         if (len(parser.files) > 1) and (parser.files[0] == 'send'):
             if type is None:
                 type = 1
-            q.send(' '.join(parser.files[1:]), block, type)
+            q.send(' '.join(parser.files[1:]).encode('utf-8'), block, type)
         elif (len(parser.files) == 1) and (parser.files[0] == 'receive'):
             if type is None:
                 type = 0
@@ -132,6 +134,36 @@ try:
             nocmd = True
         if parser.opts['--remove'] is not None:
             s.remove()
+        elif nocmd:
+            print('Invalid command given', file = sys.stderr)
+            sys.exit(1)
+    
+    elif parser.opts['--shm'] is not None:
+        key, flags, mode, size, length, offset = None, 0, 0o600, None, 0, 0
+        if parser.opts['--key']       is not None:  key    = int(parser.opts['--key'][0])
+        if parser.opts['--create']    is not None:  flags  = sysv_ipc.IPC_CREAT
+        if parser.opts['--exclusive'] is not None:  flags  = sysv_ipc.IPC_CREAT | sysv_ipc.IPC_EXCL
+        if parser.opts['--mode']      is not None:  mode   = int(parser.opts['--mode'][0], 8)
+        if parser.opts['--size']      is not None:  size   = int(parser.opts['--size'][0])
+        if parser.opts['--length']    is not None:  length = int(parser.opts['--length'][0])
+        if parser.opts['--offset']    is not None:  offset = int(parser.opts['--offset'][0])
+        if size is None:
+            m = sysv_ipc.SharedMemory(key, flags, mode)
+        else:
+            m = sysv_ipc.SharedMemory(key, flags, mode, size)
+        if key is None:
+            print('key: %i' % m.key)
+        nocmd = False
+        if (len(parser.files) > 1) and (parser.files[0] == 'write'):
+            m.write(' '.join(parser.files[1:]).encode('utf-8'), offset)
+        elif (len(parser.files) == 1) and (parser.files[0] == 'read'):
+            sys.stdout.buffer.write(m.read(length, offset))
+            sys.stdout.buffer.write(b'\n')
+            sys.stdout.buffer.flush()
+        elif key is not None:
+            nocmd = True
+        if parser.opts['--remove'] is not None:
+            m.remove()
         elif nocmd:
             print('Invalid command given', file = sys.stderr)
             sys.exit(1)
