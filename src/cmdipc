@@ -31,7 +31,7 @@ parser = ArgParser('System V and POSIX IPC from the command line',
                               '%s -S [<options>] [p|v|z|read]'        % sys.argv[0],
                               '%s -S [<options>] set <value>'         % sys.argv[0],
                               '%s -M [<options>] [read]'              % sys.argv[0],
-                              '%s -M [<options>] write -- <data>'     % sys.argv[0],
+                              '%s -M [<options>] write [--] <data>'   % sys.argv[0],
                               '%s -X [<options>] [enter|leave]'       % sys.argv[0],
                               '%s -C [<options>] [enter|leave|wait]'  % sys.argv[0],
                               '%s -C [<options>] notify [all]'        % sys.argv[0],
@@ -40,7 +40,7 @@ parser = ArgParser('System V and POSIX IPC from the command line',
                               '%s -B [<options>] -r'                  % sys.argv[0],
                               '%s -L [<options>] [shared [un]lock]'   % sys.argv[0],
                               '%s -L [<options>] exclusive [un]lock'  % sys.argv[0],
-                              '%s -R [<options>] [<message>]'         % sys.argv[0]]),
+                              '%s -R [<options>] [--] [<message>]'    % sys.argv[0]]),
                    None, None, True, ArgParser.standard_abbreviations())
 
 
