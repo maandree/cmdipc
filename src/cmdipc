@@ -60,7 +60,7 @@ parser.add_argumentless(['-Q', '--mqueue'],      0,          'Use message queue'
 parser.add_argumentless(['-S', '--semaphore'],   0,          'Use semaphore')
 parser.add_argumentless(['-M', '--shm'],         0,          'Use shared memory')
 parser.add_argumentless(['-X', '--mutex'],       0,          'Use mutex (1 semaphore)')
-parser.add_argumentless(['-C', '--condition'],   0,          'Use condition (2 semaphores, 1 mqueue)')
+parser.add_argumentless(['-C', '--condition'],   0,          'Use condition (3 semaphores)')
 parser.add_argumentless(['-B', '--barrier'],     0,          'Use barrier (2 semaphores)')
 #parser.add_argumentless(['-R', '--rendezvous'],  0,          'Use rendezvous (non-primitive)')
 #parser.add_argumentless(['-L', '--shared-lock'], 0,          'Use shared lock (non-primitive)')
@@ -200,23 +200,23 @@ try:
             key = [int(k) for k in key.split('.')]
         s = sysv_ipc.Semaphore(key[0], flags, mode, 1)
         c = sysv_ipc.Semaphore(key[1], flags, mode, 0)
-        q = sysv_ipc.MessageQueue(key[2], flags, mode, 1)
+        q = sysv_ipc.Semaphore(key[2], flags, mode, 0)
         if key[0] is None:
             print('key: %i.%i.%i' % (s.key, c.key, q.key))
         nocmd = False
         if len(parser.files) == 1:
             if   parser.files[0] == 'enter':      s.P(timeout)
             elif parser.files[0] == 'leave':      s.V()
-            elif parser.files[0] == 'wait':       c.V() ; s.V() ; q.receive() ; s.P(timeout) ; c.P()
-            elif parser.files[0] == 'notify':     q.send('N')
+            elif parser.files[0] == 'wait':       c.V() ; s.V() ; q.P(timeout) ; s.P(timeout) ; c.P()
+            elif parser.files[0] == 'notify':     q.V()
             elif parser.files[0] == 'broadcast':
                 for _ in range(c.value):
-                    q.send('N')
+                    q.V()
             elif key[0] is not None:
                 nocmd = True
         elif (len(parser.files) == 2) and (parser.files[0] == 'notify') and (parser.files[1] == 'all'):
             for _ in range(min(c.value, 1)):
-                q.send('N')
+                q.V()
         elif key[0] is not None:
             nocmd = True
         if parser.opts['--remove'] is not None:
