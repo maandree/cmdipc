@@ -59,9 +59,9 @@ parser.add_argumentless(['-x', '--exclusive'],   0,          'Create exclusive i
 parser.add_argumentless(['-Q', '--mqueue'],      0,          'Use message queue')
 parser.add_argumentless(['-S', '--semaphore'],   0,          'Use semaphore')
 parser.add_argumentless(['-M', '--shm'],         0,          'Use shared memory')
-parser.add_argumentless(['-X', '--mutex'],       0,          'Use mutex (using semaphore)')
-parser.add_argumentless(['-C', '--condition'],   0,          'Use condition (non-primitive)')
-parser.add_argumentless(['-B', '--barrier'],     0,          'Use barrier (non-primitive)')
+parser.add_argumentless(['-X', '--mutex'],       0,          'Use mutex (1 semaphore)')
+parser.add_argumentless(['-C', '--condition'],   0,          'Use condition (2 semaphores, 1 mqueue)')
+parser.add_argumentless(['-B', '--barrier'],     0,          'Use barrier (2 semaphores)')
 #parser.add_argumentless(['-R', '--rendezvous'],  0,          'Use rendezvous (non-primitive)')
 #parser.add_argumentless(['-L', '--shared-lock'], 0,          'Use shared lock (non-primitive)')
 
