@@ -37,7 +37,9 @@ parser = ArgParser('System V and POSIX IPC from the command line',
                               '%s -C [<options>] notify [all]'        % sys.argv[0],
                               '%s -C [<options>] broadcast'           % sys.argv[0],
                               '%s -B [<options>] <threshold> [enter]' % sys.argv[0],
-                              '%s -B [<options>] -r'                  % sys.argv[0]]),
+                              '%s -B [<options>] -r'                  % sys.argv[0],
+                              '%s -L [<options>] [shared [un]lock]'   % sys.argv[0],
+                              '%s -L [<options>] exclusive [un]lock'  % sys.argv[0]]),
                    None, None, True, ArgParser.standard_abbreviations())
 
 
@@ -62,8 +64,8 @@ parser.add_argumentless(['-M', '--shm'],         0,          'Use shared memory'
 parser.add_argumentless(['-X', '--mutex'],       0,          'Use mutex (1 semaphore)')
 parser.add_argumentless(['-C', '--condition'],   0,          'Use condition (3 semaphores)')
 parser.add_argumentless(['-B', '--barrier'],     0,          'Use barrier (2 semaphores)')
+parser.add_argumentless(['-L', '--shared-lock'], 0,          'Use shared lock (3 semaphores)')
 #parser.add_argumentless(['-R', '--rendezvous'],  0,          'Use rendezvous (non-primitive)')
-#parser.add_argumentless(['-L', '--shared-lock'], 0,          'Use shared lock (non-primitive)')
 
 
 parser.parse()
@@ -204,7 +206,6 @@ try:
         if key[0] is None:
             print('key: %i.%i.%i' % (s.key, c.key, q.key))
         nocmd = False
-        s_, c_, q_ = s.value, c.value, q.value
         if len(parser.files) == 1:
             if   parser.files[0] == 'enter':      s.P(timeout)
             elif parser.files[0] == 'leave':      s.V()
@@ -220,7 +221,6 @@ try:
                 q.V()
         elif key[0] is not None:
             nocmd = True
-        print('s: %i → %i\nc: %i → %i\nq: %i → %i\n' % (s_, s.value, c_, c.value, q_, q.value))
         if parser.opts['--remove'] is not None:
             s.remove()
             c.remove()
@@ -261,6 +261,49 @@ try:
         elif key[0] is not None:
             nocmd = True
         if parser.opts['--remove'] is not None:
+            s.remove()
+            m.remove()
+        elif nocmd:
+            print('Invalid command given', file = sys.stderr)
+            sys.exit(1)
+    
+    elif parser.opts['--shared-lock'] is not None:
+        key, flags, mode, timeout = [None, None, None], 0, 0o600, None
+        if parser.opts['--nonblocking'] is not None:  timeout = 0
+        if parser.opts['--key']         is not None:  key     = parser.opts['--key'][0]
+        if parser.opts['--create']      is not None:  flags   = sysv_ipc.IPC_CREAT
+        if parser.opts['--exclusive']   is not None:  flags   = sysv_ipc.IPC_CREAT | sysv_ipc.IPC_EXCL
+        if parser.opts['--mode']        is not None:  mode    = int(parser.opts['--mode'][0], 8)
+        if parser.opts['--timeout']     is not None:  timeout = float(parser.opts['--timeout'][0])
+        if key[0] is not None:
+            key = [int(k) for k in key.split('.')]
+        x = sysv_ipc.Semaphore(key[0], flags, mode, 1)
+        s = sysv_ipc.Semaphore(key[1], flags, mode, 0)
+        m = sysv_ipc.Semaphore(key[2], flags, mode, 1)
+        if key[0] is None:
+            print('key: %i.%i.%i' % (x.key, s.key, m.key))
+        nocmd = False
+        verb = ' '.join(parser.files)
+        if verb == 'shared lock':
+            m.P(timeout)
+            if s.value == 0:
+                x.P(timeout)
+            s.V()
+            m.V()
+        elif verb == 'exclusive lock':
+            x.P(timeout)
+        elif verb == 'shared unlock':
+            m.P(timeout)
+            s.P(timeout)
+            if s.value == 0:
+                x.V()
+            m.V()
+        elif verb == 'exclusive unlock':
+            x.V()
+        elif key[0] is not None:
+            nocmd = True
+        if parser.opts['--remove'] is not None:
+            x.remove()
             s.remove()
             m.remove()
         elif nocmd:
