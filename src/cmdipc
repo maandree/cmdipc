@@ -29,12 +29,14 @@ parser = ArgParser('System V and POSIX IPC from the command line',
                    '\n'.join(['%s -Q [<options>] [receive]'           % sys.argv[0],
                               '%s -Q [<options>] send [--] <message>' % sys.argv[0],
                               '%s -S [<options>] [p|v|z|read]'        % sys.argv[0],
+                              '%s -S [<options>] set <value>'         % sys.argv[0],
                               '%s -M [<options>] [read]'              % sys.argv[0],
                               '%s -M [<options>] write -- <data>'     % sys.argv[0],
                               '%s -X [<options>] [enter|leave]'       % sys.argv[0],
                               '%s -C [<options>] [enter|leave|wait]'  % sys.argv[0],
                               '%s -C [<options>] notify [all]'        % sys.argv[0],
-                              '%s -C [<options>] broadcast'           % sys.argv[0]]),
+                              '%s -C [<options>] broadcast'           % sys.argv[0],
+                              '%s -B [<options>] <threshold> [enter]' % sys.argv[0]]),
                    None, None, True, ArgParser.standard_abbreviations())
 
 
@@ -120,11 +122,11 @@ try:
         if key is None:
             print('key: %i' % s.key)
         nocmd = False
-        if   (len(parser.files) == 1) and (parser.files[0] == 'p'):  s.P(timeout, delta)
-        elif (len(parser.files) == 1) and (parser.files[0] == 'v'):  s.V(delta)
-        elif (len(parser.files) == 1) and (parser.files[0] == 'z'):  s.Z(timeout)
-        elif (len(parser.files) == 1) and (parser.files[0] == 'read'):
-            print('%i' % s.value)
+        if   (len(parser.files) == 1) and (parser.files[0] == 'p'):     s.P(timeout, delta)
+        elif (len(parser.files) == 1) and (parser.files[0] == 'v'):     s.V(delta)
+        elif (len(parser.files) == 1) and (parser.files[0] == 'z'):     s.Z(timeout)
+        elif (len(parser.files) == 1) and (parser.files[0] == 'read'):  print('%i' % s.value)
+        elif (len(parser.files) == 2) and (parser.files[0] == 'set'):   s.value = int(parser.files[1])
         elif key is not None:
             nocmd = True
         if parser.opts['--remove'] is not None:
