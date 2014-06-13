@@ -58,10 +58,12 @@ parser.add_argumentless(['-c', '--create'],      0,          'Create item')
 parser.add_argumentless(['-x', '--exclusive'],   0,          'Create exclusive item')
 parser.add_argumentless(['-Q', '--mqueue'],      0,          'Use message queue')
 parser.add_argumentless(['-S', '--semaphore'],   0,          'Use semaphore')
+#parser.add_argumentless(['-M', '--shm'],         0,          'Use shared memory')
 parser.add_argumentless(['-X', '--mutex'],       0,          'Use mutex (using semaphore)')
 parser.add_argumentless(['-C', '--condition'],   0,          'Use condition (non-primitive)')
 #parser.add_argumentless(['-B', '--barrier'],     0,          'Use barrier (non-primitive)')
-#parser.add_argumentless(['-M', '--shm'],         0,          'Use shared memory')
+#parser.add_argumentless(['-R', '--rendezvous'],  0,          'Use rendezvous (non-primitive)')
+#parser.add_argumentless(['-L', '--shared-lock'], 0,          'Use shared lock (non-primitive)')
 
 
 parser.parse()
@@ -109,13 +111,14 @@ try:
     
     elif parser.opts['--semaphore'] is not None:
         key, flags, mode, initial, timeout, delta = None, 0, 0o600, 0, None, 1
-        if parser.opts['--key']       is not None:  key     = int(parser.opts['--key'][0])
-        if parser.opts['--create']    is not None:  flags   = sysv_ipc.IPC_CREAT
-        if parser.opts['--exclusive'] is not None:  flags   = sysv_ipc.IPC_CREAT | sysv_ipc.IPC_EXCL
-        if parser.opts['--mode']      is not None:  mode    = int(parser.opts['--mode'][0], 8)
-        if parser.opts['--initial']   is not None:  initial = int(parser.opts['--initial'][0])
-        if parser.opts['--timeout']   is not None:  timeout = float(parser.opts['--timeout'][0])
-        if parser.opts['--delta']     is not None:  delta   = int(parser.opts['--delta'][0])
+        if parser.opts['--nonblocking'] is not None:  timeout = 0
+        if parser.opts['--key']         is not None:  key     = int(parser.opts['--key'][0])
+        if parser.opts['--create']      is not None:  flags   = sysv_ipc.IPC_CREAT
+        if parser.opts['--exclusive']   is not None:  flags   = sysv_ipc.IPC_CREAT | sysv_ipc.IPC_EXCL
+        if parser.opts['--mode']        is not None:  mode    = int(parser.opts['--mode'][0], 8)
+        if parser.opts['--initial']     is not None:  initial = int(parser.opts['--initial'][0])
+        if parser.opts['--timeout']     is not None:  timeout = float(parser.opts['--timeout'][0])
+        if parser.opts['--delta']       is not None:  delta   = int(parser.opts['--delta'][0])
         s = sysv_ipc.Semaphore(key, flags, mode, initial)
         if key is None:
             print('key: %i' % s.key)
@@ -135,11 +138,12 @@ try:
     
     elif parser.opts['--mutex'] is not None:
         key, flags, mode, timeout = None, 0, 0o600, None
-        if parser.opts['--key']       is not None:  key     = int(parser.opts['--key'][0])
-        if parser.opts['--create']    is not None:  flags   = sysv_ipc.IPC_CREAT
-        if parser.opts['--exclusive'] is not None:  flags   = sysv_ipc.IPC_CREAT | sysv_ipc.IPC_EXCL
-        if parser.opts['--mode']      is not None:  mode    = int(parser.opts['--mode'][0], 8)
-        if parser.opts['--timeout']   is not None:  timeout = float(parser.opts['--timeout'][0])
+        if parser.opts['--nonblocking'] is not None:  timeout = 0
+        if parser.opts['--key']         is not None:  key     = int(parser.opts['--key'][0])
+        if parser.opts['--create']      is not None:  flags   = sysv_ipc.IPC_CREAT
+        if parser.opts['--exclusive']   is not None:  flags   = sysv_ipc.IPC_CREAT | sysv_ipc.IPC_EXCL
+        if parser.opts['--mode']        is not None:  mode    = int(parser.opts['--mode'][0], 8)
+        if parser.opts['--timeout']     is not None:  timeout = float(parser.opts['--timeout'][0])
         s = sysv_ipc.Semaphore(key, flags, mode, 1)
         if key is None:
             print('key: %i' % s.key)
@@ -156,11 +160,12 @@ try:
     
     elif parser.opts['--condition'] is not None:
         key, flags, mode, timeout = [None, None, None], 0, 0o600, None
-        if parser.opts['--key']       is not None:  key     = parser.opts['--key'][0]
-        if parser.opts['--create']    is not None:  flags   = sysv_ipc.IPC_CREAT
-        if parser.opts['--exclusive'] is not None:  flags   = sysv_ipc.IPC_CREAT | sysv_ipc.IPC_EXCL
-        if parser.opts['--mode']      is not None:  mode    = int(parser.opts['--mode'][0], 8)
-        if parser.opts['--timeout']   is not None:  timeout = float(parser.opts['--timeout'][0])
+        if parser.opts['--nonblocking'] is not None:  timeout = 0
+        if parser.opts['--key']         is not None:  key     = parser.opts['--key'][0]
+        if parser.opts['--create']      is not None:  flags   = sysv_ipc.IPC_CREAT
+        if parser.opts['--exclusive']   is not None:  flags   = sysv_ipc.IPC_CREAT | sysv_ipc.IPC_EXCL
+        if parser.opts['--mode']        is not None:  mode    = int(parser.opts['--mode'][0], 8)
+        if parser.opts['--timeout']     is not None:  timeout = float(parser.opts['--timeout'][0])
         if key[0] is not None:
             key = [int(k) for k in key.split('.')]
         s = sysv_ipc.Semaphore(key[0], flags, mode, 1)
