@@ -1,0 +1,5 @@
+System V and POSIX interprocess communication
+from the command line. In addition to the primities
+shared memory, message queue and semaphores, this
+tool can from these primitives construct mutexe,
+conditions, barriers, shared locks and rendezvous.
