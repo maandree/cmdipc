@@ -66,7 +66,7 @@ parser.add_argumentless(['-S', '--semaphore'],   0,          'Use semaphore')
 parser.add_argumentless(['-M', '--shm'],         0,          'Use shared memory')
 parser.add_argumentless(['-X', '--mutex'],       0,          'Use mutex (1 semaphore)')
 parser.add_argumentless(['-C', '--condition'],   0,          'Use condition (3 semaphores)')
-parser.add_argumentless(['-B', '--barrier'],     0,          'Use barrier (2 semaphores, SysV only)')
+parser.add_argumentless(['-B', '--barrier'],     0,          'Use barrier (2 semaphores, -P: 3 semaphores)')
 parser.add_argumentless(['-L', '--shared-lock'], 0,          'Use shared lock (3 semaphores)')
 parser.add_argumentless(['-R', '--rendezvous'],  0,          'Use rendezvous (2 semaphores, 1 mqueue, SysV only)')
 
@@ -147,7 +147,7 @@ try:
         nocmd = False
         if   (len(parser.files) == 1) and (parser.files[0] == 'p'):     s.P(timeout, delta)
         elif (len(parser.files) == 1) and (parser.files[0] == 'v'):     s.V(delta)
-        elif (len(parser.files) == 1) and (parser.files[0] == 'z') and (not use_posix):     s.Z(timeout)
+        elif (len(parser.files) == 1) and (parser.files[0] == 'z'):     s.Z(timeout)
         elif (len(parser.files) == 1) and (parser.files[0] == 'read'):  print('%i' % s.value)
         elif (len(parser.files) == 2) and (parser.files[0] == 'set'):   s.set_value(int(parser.files[1]))
         elif key is not None:
@@ -253,8 +253,10 @@ try:
             print('Invalid command given', file = sys.stderr)
             sys.exit(1)
     
-    elif (not use_posix) and (parser.opts['--barrier'] is not None):
+    elif parser.opts['--barrier'] is not None:
         key, flags, mode, timeout = [None, None], 0, 0o600, None
+        if use_posix:
+            key = [None, None, None]
         if parser.opts['--nonblocking'] is not None:  timeout = 0
         if parser.opts['--key']         is not None:  key     = ipc.keysep(parser.opts['--key'][0])
         if parser.opts['--create']      is not None:  flags   = ipc.CREAT
@@ -268,30 +270,58 @@ try:
                 sys.exit(1)
         else:
             threshold = int(parser.files[0])
-        s = ipc.Semaphore(key[0], flags, mode, threshold)
-        m = ipc.Semaphore(key[1], flags, mode, 1)
-        if key[0] is None:
-            print('key: %s' % ipc.keycat(s.key, m.key))
+        if not use_posix:
+            s = ipc.Semaphore(key[0], flags, mode, threshold)
+            m = ipc.Semaphore(key[1], flags, mode, 1)
+            if key[0] is None:
+                print('key: %s' % ipc.keycat(s.key, m.key))
+        else:
+            x = ipc.Semaphore(key[0], flags, mode, 1)
+            c = ipc.Semaphore(key[1], flags, mode, 0)
+            q = ipc.Semaphore(key[2], flags, mode, 0)
+            if key[0] is None:
+                print('key: %s' % ipc.keycat(x.key, c.key, q.key))
         nocmd = False
         if (len(parser.files) == 2) and (parser.files[1] == 'enter'):
-            s.P(timeout)
-            s.Z(timeout)
-            try:
-                m.P(0)
-            except ipc.BusyError:
-                pass
+            if not use_posix:
+                s.P(timeout)
+                s.Z(timeout)
+                try:
+                    m.P(0)
+                except ipc.BusyError:
+                    pass
+                else:
+                    if s.value == 0:
+                        s.set_value(threshold)
+                    m.V()
             else:
-                if s.value == 0:
-                    s.set_value(threshold)
-                m.V()
+                x.P(timeout)
+                c.V()
+                if c.value == threshold:
+                    q.V(threshold - 1)
+                    c.set_value(0)
+                    x.V()
+                else:
+                    x.V()
+                    q.P(timeout)
         elif key[0] is not None:
             nocmd = True
         if parser.opts['--remove'] is not None:
-            s.remove()
-            m.remove()
+            if not use_posix:
+                s.remove()
+                m.remove()
+            else:
+                x.remove()
+                c.remove()
+                q.remove()
         elif nocmd:
-            s.close()
-            m.close()
+            if not use_posix:
+                s.close()
+                m.close()
+            else:
+                x.close()
+                c.close()
+                q.close()
             print('Invalid command given', file = sys.stderr)
             sys.exit(1)
     
@@ -395,5 +425,5 @@ except ipc.SignalError:       sys.exit(5)
 except ipc.PermissionsError:  sys.exit(4)
 except ipc.ExistentialError:  sys.exit(3)
 except ipc.BusyError:         sys.exit(2)
-except:                       sys.exit(1)
+#except:                       sys.exit(1)
 

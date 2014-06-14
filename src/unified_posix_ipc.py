@@ -39,13 +39,52 @@ class Semaphore(posix_ipc.Semaphore):
     def __init__(self, *args, **kwargs):
         posix_ipc.Semaphore.__init__(self, *args, **kwargs)
         self.key = self.name
-    def P(self, timeout = None):
-        self.acquire(timeout)
-    def V(self):
-        self.release()
+    def acquire(self, timeout = None, delta = 1):
+        have = 0
+        try:
+            for _ in range(abs(delta)):
+                posix_ipc.Semaphore.acquire(self, timeout)
+                have += 1
+        except Exception as e:
+            try:
+                self.release(have)
+            except:
+                pass
+            raise e
+    def release(self, delta = 1):
+        for _ in range(abs(delta)):
+            posix_ipc.Semaphore.release(self)
+    def P(self, timeout = None, delta = 1):
+        self.acquire(timeout, delta)
+    def V(self, delta = 1):
+        self.release(delta)
+    def Z(self, timeout = None):
+        if not timeout == 0:
+            import sys
+            print('Z operation over POSIX semaphore require spinlock', file = sys.stderr)
+        if timeout is None:
+            while not self.value == 0:
+                pass
+        elif timeout == 0:
+            if not self.value == 0:
+                raise BusyError()
+        else:
+            import time
+            end = time.monotonic() + timeout
+            while not self.value == 0:
+                if time.monotonic() > end:
+                    raise BusyError()
     def set_value(self, value):
-        for _ in range(value):
-            self.V()
+        n = abs(value) - self.value
+        try:
+            if n > 0:
+                for _ in range(n):
+                    self.V()
+            elif n < 0:
+                for _ in range(-n):
+                    self.P(0)
+        except BusyError:
+            pass
     def remove(self):
         self.unlink()
         self.close()
