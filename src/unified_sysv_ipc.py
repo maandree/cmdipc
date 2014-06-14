@@ -26,7 +26,8 @@ PermissionsError = sysv_ipc.PermissionsError
 ExistentialError = sysv_ipc.ExistentialError
 BusyError = sysv_ipc.BusyError
 class SignalError(Exception):
-    pass
+    def __init__(self, *argv, **kwargs):
+        Exception.__init__(self, *argv, **kwargs)
 
 CREAT = sysv_ipc.IPC_CREAT
 EXCL = sysv_ipc.IPC_EXCL

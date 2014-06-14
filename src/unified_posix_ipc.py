@@ -38,25 +38,29 @@ def keysep(keys):
 class Semaphore(posix_ipc.Semaphore):
     def __init__(self, *args, **kwargs):
         posix_ipc.Semaphore.__init__(self, *args, **kwargs)
-    def P(timeout = None):
+        self.key = self.name
+    def P(self, timeout = None):
         self.acquire(timeout)
-    def V():
+    def V(self):
         self.release()
     def set_value(self, value):
         for _ in range(value):
             self.V()
     def remove(self):
         self.unlink()
+        self.close()
 
 class SharedMemory(posix_ipc.SharedMemory):
     def __init__(self, *args, **kwargs):
         posix_ipc.SharedMemory.__init__(self, *args, **kwargs)
+        self.key = self.name
     def read(self, byte_count = 0, offset = 0):
         rc = []
+        byte_count = self.size if byte_count == 0 else byte_count
         byte_count = min(byte_count, self.size - offset)
         os.lseek(self.fd, offset, os.SEEK_SET)
         while len(rc) < byte_count:
-            rc += list(os.read(self.fd), byte_count - len(rc))
+            rc += list(os.read(self.fd, byte_count - len(rc)))
         return bytes(rc)
     def write(self, s, offset = 0):
         s = s[:min(len(s), self.size - offset)]
@@ -67,10 +71,13 @@ class SharedMemory(posix_ipc.SharedMemory):
         self.close_fd()
     def remove(self):
         self.unlink()
+        self.close()
 
 class MessageQueue(posix_ipc.MessageQueue):
     def __init__(self, *args, **kwargs):
         posix_ipc.MessageQueue.__init__(self, *args, **kwargs)
+        self.key = self.name
     def remove(self):
         self.unlink()
+        self.close()
 
