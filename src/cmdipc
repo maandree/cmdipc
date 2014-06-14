@@ -253,12 +253,16 @@ try:
             print('key: %i.%i' % (s.key, m.key))
         nocmd = False
         if (len(parser.files) == 2) and (parser.files[1] == 'enter'):
-            s.P()
+            s.P(timeout)
             s.Z()
-            m.P()
-            if s.value == 0:
-                s.value = threshold
-            m.V()
+            try:
+                m.P(0)
+            except  sysv_ipc.BusyError:  pass
+            except posix_ipc.BusyError:  pass
+            else:
+                if s.value == 0:
+                    s.value = threshold
+                m.V()
         elif key[0] is not None:
             nocmd = True
         if parser.opts['--remove'] is not None:
