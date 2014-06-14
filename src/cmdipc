@@ -21,8 +21,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import sys
 
 from argparser import ArgParser
-import sysv_ipc
-import posix_ipc
+import sysv_ipc  # http://semanchuk.com/philip/sysv_ipc
+import posix_ipc # http://semanchuk.com/philip/posix_ipc
 
 
 parser = ArgParser('System V and POSIX IPC from the command line',
@@ -45,11 +45,11 @@ parser = ArgParser('System V and POSIX IPC from the command line',
 
 
 parser.add_argumentless(['-h', '-?', '--help'],  0,          'Prints this help message and exits')
-#parser.add_argumentless(['-p', '--posix'],       0,          'Use POSIX IPC rather than System V IPC')
 parser.add_argumented  (['-k', '--key'],         0, 'KEY',   'The key (SysV) or name (POSIX) of the item')
 parser.add_argumented  (['-m', '--mode'],        0, 'OCTAL', 'The mode for the item')
 parser.add_argumented  (['-s', '--size'],        0, 'SIZE',  'Maximum size for messages')
 parser.add_argumented  (['-t', '--type'],        0, 'TYPE',  'Message type')
+parser.add_argumented  (['-p', '--priority'],    0, 'PRIO',  'Message priority')
 parser.add_argumented  (['-d', '--delta'],       0, 'DELTA', 'Semaphore value increment')
 parser.add_argumented  (['-i', '--initial'],     0, 'VALUE', 'Initial semaphore value')
 parser.add_argumented  (['-b', '--timeout'],     0, 'SECS',  'Semaphore V/Z timeout, in seconds')
@@ -59,6 +59,7 @@ parser.add_argumentless(['-r', '--remove'],      0,          'Remove unit')
 parser.add_argumentless(['-n', '--nonblocking'], 0,          'Do not block, exit with 2 if busy')
 parser.add_argumentless(['-c', '--create'],      0,          'Create item')
 parser.add_argumentless(['-x', '--exclusive'],   0,          'Create exclusive item')
+parser.add_argumentless(['-P', '--posix'],       0,          'Use POSIX IPC rather than System V IPC')
 parser.add_argumentless(['-Q', '--mqueue'],      0,          'Use message queue')
 parser.add_argumentless(['-S', '--semaphore'],   0,          'Use semaphore')
 parser.add_argumentless(['-M', '--shm'],         0,          'Use shared memory')
@@ -77,35 +78,81 @@ if parser.opts['--help'] is not None:
     sys.exit(0)
 
 
+if parser.opts['--posix'] is not None:
+    def S_value(self, value):
+        for _ in range(value):
+            self.V()
+    def shm_read(self, byte_count = 0, offset = 0):
+        pass # TODO
+    def shm_write(self, s, offset = 0):
+        pass # TODO
+    posix_ipc.Semaphore.P = posix_ipc.Semaphore.acquire
+    posix_ipc.Semaphore.V = posix_ipc.Semaphore.release
+    posix_ipc.Semaphore.set_value = S_value
+    posix_ipc.Semaphore.remove = posix_ipc.Semaphore.unlink
+    posix_ipc.SharedMemory.close = posix_ipc.SharedMemory.close_fd
+    posix_ipc.SharedMemory.remove = posix_ipc.SharedMemory.unlink
+    posix_ipc.SharedMemory.read = shm_read
+    posix_ipc.SharedMemory.write = shm_write
+    posix_ipc.MessageQueue.remove = posix_ipc.MessageQueue.unlink
+    use_posix = True
+    ipc = posix_ipc
+    IPC_CREAT = posix_ipc.O_CREAT
+    IPC_EXCL = posix_ipc.O_EXCL
+
+else:
+    def S_value(self, value):
+        self.value = value
+    def noop(self):
+        pass
+    def mq_send(self, message, timeout = None, type = 1):
+        self.send(message, (timeout is None) or (timeout != 0), type)
+    def mq_receive(self, timeout = None, type = 1):
+        return self.receive((timeout is None) or (timeout != 0), type)
+    sysv_ipc.Semaphore.set_value = S_value
+    sysv_ipc.Semaphore.close = noop
+    sysv_ipc.SharedMemory.close = noop
+    sysv_ipc.MessageQueue.close = noop
+    sysv_ipc.MessageQueue.send = mq_send
+    sysv_ipc.MessageQueue.receive = mq_receive
+    use_posix = False
+    ipc = sysv_ipc
+    IPC_CREAT = sysv_ipc.IPC_CREAT
+    IPC_EXCL = sysv_ipc.IPC_EXCL
+
+
 try:
     if parser.opts['--mqueue'] is not None:
-        key, flags, mode, size, type = None, 0, 0o600, 2048, None
-        block = parser.opts['--nonblocking'] is None
-        if parser.opts['--key']       is not None:  key   = int(parser.opts['--key'][0])
-        if parser.opts['--create']    is not None:  flags = sysv_ipc.IPC_CREAT
-        if parser.opts['--exclusive'] is not None:  flags = sysv_ipc.IPC_CREAT | sysv_ipc.IPC_EXCL
-        if parser.opts['--mode']      is not None:  mode  = int(parser.opts['--mode'][0], 8)
-        if parser.opts['--size']      is not None:  size  = int(parser.opts['--size'][0])
-        if parser.opts['--type']      is not None:  type  = int(parser.opts['--type'][0])
+        key, flags, mode, size, type, timeout = None, 0, 0o600, 2048, None, None
+        if parser.opts['--nonblocking'] is not None:  timeout = 0
+        if parser.opts['--key']         is not None:  key     = int(parser.opts['--key'][0])
+        if parser.opts['--create']      is not None:  flags   = IPC_CREAT
+        if parser.opts['--exclusive']   is not None:  flags   = IPC_CREAT | IPC_EXCL
+        if parser.opts['--mode']        is not None:  mode    = int(parser.opts['--mode'][0], 8)
+        if parser.opts['--size']        is not None:  size    = int(parser.opts['--size'][0])
+        if parser.opts['--type']        is not None:  type    = int(parser.opts['--type'][0])
+        if parser.opts['--priority']    is not None:  type    = int(parser.opts['--priority'][0])
+        if parser.opts['--timeout']     is not None:  timeout = float(parser.opts['--timeout'][0])
         q = sysv_ipc.MessageQueue(key, flags, mode, size)
         if key is None:
             print('key: %i' % q.key)
         nocmd = False
         if (len(parser.files) > 1) and (parser.files[0] == 'send'):
             if type is None:
-                type = 1
-            q.send(' '.join(parser.files[1:]).encode('utf-8'), block, type)
+                type = 0 if use_posix else 1
+            q.send(' '.join(parser.files[1:]).encode('utf-8'), timeout, type)
         elif (len(parser.files) == 1) and (parser.files[0] == 'receive'):
             if type is None:
                 type = 0
-            (message, type) = q.receive(block, type)
-            print('type: %i' % type)
+            (message, type) = q.receive(timeout) if use_posix else q.receive(timeout, type)
+            print(('priority: %i' if use_posix else 'type: %i') % type)
             print('length: %i' % len(message))
             sys.stdout.buffer.write(message)
             sys.stdout.buffer.write(b'\n')
             sys.stdout.buffer.flush()
         elif key is not None:
             nocmd = True
+        q.close()
         if parser.opts['--remove'] is not None:
             q.remove()
         elif nocmd:
@@ -116,8 +163,8 @@ try:
         key, flags, mode, initial, timeout, delta = None, 0, 0o600, 0, None, 1
         if parser.opts['--nonblocking'] is not None:  timeout = 0
         if parser.opts['--key']         is not None:  key     = int(parser.opts['--key'][0])
-        if parser.opts['--create']      is not None:  flags   = sysv_ipc.IPC_CREAT
-        if parser.opts['--exclusive']   is not None:  flags   = sysv_ipc.IPC_CREAT | sysv_ipc.IPC_EXCL
+        if parser.opts['--create']      is not None:  flags   = IPC_CREAT
+        if parser.opts['--exclusive']   is not None:  flags   = IPC_CREAT | IPC_EXCL
         if parser.opts['--mode']        is not None:  mode    = int(parser.opts['--mode'][0], 8)
         if parser.opts['--initial']     is not None:  initial = int(parser.opts['--initial'][0])
         if parser.opts['--timeout']     is not None:  timeout = float(parser.opts['--timeout'][0])
@@ -130,9 +177,10 @@ try:
         elif (len(parser.files) == 1) and (parser.files[0] == 'v'):     s.V(delta)
         elif (len(parser.files) == 1) and (parser.files[0] == 'z'):     s.Z(timeout)
         elif (len(parser.files) == 1) and (parser.files[0] == 'read'):  print('%i' % s.value)
-        elif (len(parser.files) == 2) and (parser.files[0] == 'set'):   s.value = int(parser.files[1])
+        elif (len(parser.files) == 2) and (parser.files[0] == 'set'):   s.set_value(int(parser.files[1]))
         elif key is not None:
             nocmd = True
+        s.close()
         if parser.opts['--remove'] is not None:
             s.remove()
         elif nocmd:
@@ -141,17 +189,19 @@ try:
     
     elif parser.opts['--shm'] is not None:
         key, flags, mode, size, length, offset = None, 0, 0o600, None, 0, 0
-        if parser.opts['--key']       is not None:  key    = int(parser.opts['--key'][0])
-        if parser.opts['--create']    is not None:  flags  = sysv_ipc.IPC_CREAT
-        if parser.opts['--exclusive'] is not None:  flags  = sysv_ipc.IPC_CREAT | sysv_ipc.IPC_EXCL
+        if parser.opts['--key']       is not None:  key    = parser.opts['--key'][0]
+        if parser.opts['--create']    is not None:  flags  = IPC_CREAT
+        if parser.opts['--exclusive'] is not None:  flags  = IPC_CREAT | IPC_EXCL
         if parser.opts['--mode']      is not None:  mode   = int(parser.opts['--mode'][0], 8)
         if parser.opts['--size']      is not None:  size   = int(parser.opts['--size'][0])
         if parser.opts['--length']    is not None:  length = int(parser.opts['--length'][0])
         if parser.opts['--offset']    is not None:  offset = int(parser.opts['--offset'][0])
+        if not use_posix:
+            key = int(key) if key is not None else key
         if size is None:
-            m = sysv_ipc.SharedMemory(key, flags, mode)
+            m = ipc.SharedMemory(key, flags, mode)
         else:
-            m = sysv_ipc.SharedMemory(key, flags, mode, size)
+            m = ipc.SharedMemory(key, flags, mode, size)
         if key is None:
             print('key: %i' % m.key)
         nocmd = False
@@ -163,6 +213,7 @@ try:
             sys.stdout.buffer.flush()
         elif key is not None:
             nocmd = True
+        m.close()
         if parser.opts['--remove'] is not None:
             m.remove()
         elif nocmd:
@@ -173,8 +224,8 @@ try:
         key, flags, mode, timeout = None, 0, 0o600, None
         if parser.opts['--nonblocking'] is not None:  timeout = 0
         if parser.opts['--key']         is not None:  key     = int(parser.opts['--key'][0])
-        if parser.opts['--create']      is not None:  flags   = sysv_ipc.IPC_CREAT
-        if parser.opts['--exclusive']   is not None:  flags   = sysv_ipc.IPC_CREAT | sysv_ipc.IPC_EXCL
+        if parser.opts['--create']      is not None:  flags   = IPC_CREAT
+        if parser.opts['--exclusive']   is not None:  flags   = IPC_CREAT | IPC_EXCL
         if parser.opts['--mode']        is not None:  mode    = int(parser.opts['--mode'][0], 8)
         if parser.opts['--timeout']     is not None:  timeout = float(parser.opts['--timeout'][0])
         s = sysv_ipc.Semaphore(key, flags, mode, 1)
@@ -185,6 +236,7 @@ try:
         elif (len(parser.files) == 1) and (parser.files[0] == 'leave'):  s.V()
         elif key is not None:
             nocmd = True
+        s.close()
         if parser.opts['--remove'] is not None:
             s.remove()
         elif nocmd:
@@ -195,8 +247,8 @@ try:
         key, flags, mode, timeout = [None, None, None], 0, 0o600, None
         if parser.opts['--nonblocking'] is not None:  timeout = 0
         if parser.opts['--key']         is not None:  key     = parser.opts['--key'][0]
-        if parser.opts['--create']      is not None:  flags   = sysv_ipc.IPC_CREAT
-        if parser.opts['--exclusive']   is not None:  flags   = sysv_ipc.IPC_CREAT | sysv_ipc.IPC_EXCL
+        if parser.opts['--create']      is not None:  flags   = IPC_CREAT
+        if parser.opts['--exclusive']   is not None:  flags   = IPC_CREAT | IPC_EXCL
         if parser.opts['--mode']        is not None:  mode    = int(parser.opts['--mode'][0], 8)
         if parser.opts['--timeout']     is not None:  timeout = float(parser.opts['--timeout'][0])
         if key[0] is not None:
@@ -222,6 +274,9 @@ try:
                 q.V()
         elif key[0] is not None:
             nocmd = True
+        s.close()
+        c.close()
+        q.close()
         if parser.opts['--remove'] is not None:
             s.remove()
             c.remove()
@@ -234,8 +289,8 @@ try:
         key, flags, mode, timeout = [None, None], 0, 0o600, None
         if parser.opts['--nonblocking'] is not None:  timeout = 0
         if parser.opts['--key']         is not None:  key     = parser.opts['--key'][0]
-        if parser.opts['--create']      is not None:  flags   = sysv_ipc.IPC_CREAT
-        if parser.opts['--exclusive']   is not None:  flags   = sysv_ipc.IPC_CREAT | sysv_ipc.IPC_EXCL
+        if parser.opts['--create']      is not None:  flags   = IPC_CREAT
+        if parser.opts['--exclusive']   is not None:  flags   = IPC_CREAT | IPC_EXCL
         if parser.opts['--mode']        is not None:  mode    = int(parser.opts['--mode'][0], 8)
         if parser.opts['--timeout']     is not None:  timeout = float(parser.opts['--timeout'][0])
         if len(parser.files) == 0:
@@ -261,10 +316,12 @@ try:
             except posix_ipc.BusyError:  pass
             else:
                 if s.value == 0:
-                    s.value = threshold
+                    s.set_value(threshold)
                 m.V()
         elif key[0] is not None:
             nocmd = True
+        s.close()
+        m.close()
         if parser.opts['--remove'] is not None:
             s.remove()
             m.remove()
@@ -276,8 +333,8 @@ try:
         key, flags, mode, timeout = [None, None, None], 0, 0o600, None
         if parser.opts['--nonblocking'] is not None:  timeout = 0
         if parser.opts['--key']         is not None:  key     = parser.opts['--key'][0]
-        if parser.opts['--create']      is not None:  flags   = sysv_ipc.IPC_CREAT
-        if parser.opts['--exclusive']   is not None:  flags   = sysv_ipc.IPC_CREAT | sysv_ipc.IPC_EXCL
+        if parser.opts['--create']      is not None:  flags   = IPC_CREAT
+        if parser.opts['--exclusive']   is not None:  flags   = IPC_CREAT | IPC_EXCL
         if parser.opts['--mode']        is not None:  mode    = int(parser.opts['--mode'][0], 8)
         if parser.opts['--timeout']     is not None:  timeout = float(parser.opts['--timeout'][0])
         if key[0] is not None:
@@ -307,6 +364,9 @@ try:
             x.V()
         elif key[0] is not None:
             nocmd = True
+        x.close()
+        s.close()
+        m.close()
         if parser.opts['--remove'] is not None:
             x.remove()
             s.remove()
@@ -319,12 +379,11 @@ try:
         key, flags, mode, size, timeout = [None, None, None], 0, 0o600, 2048, None
         if parser.opts['--nonblocking'] is not None:  timeout = 0
         if parser.opts['--key']         is not None:  key     = parser.opts['--key'][0]
-        if parser.opts['--create']      is not None:  flags   = sysv_ipc.IPC_CREAT
-        if parser.opts['--exclusive']   is not None:  flags   = sysv_ipc.IPC_CREAT | sysv_ipc.IPC_EXCL
+        if parser.opts['--create']      is not None:  flags   = IPC_CREAT
+        if parser.opts['--exclusive']   is not None:  flags   = IPC_CREAT | IPC_EXCL
         if parser.opts['--mode']        is not None:  mode    = int(parser.opts['--mode'][0], 8)
         if parser.opts['--size']        is not None:  size    = int(parser.opts['--size'][0])
         if parser.opts['--timeout']     is not None:  timeout = float(parser.opts['--timeout'][0])
-        block = timeout != 0
         if key[0] is not None:
             key = [int(k) for k in key.split('.')]
         m = sysv_ipc.Semaphore(key[0], flags, mode, 1)
@@ -339,19 +398,22 @@ try:
             if i.value == 0:
                 i.V()
                 m.V()
-                q.send(send_message, block, 1)
-                (recv_message, _type) = q.receive(block, 2)
+                q.send(send_message, timeout, 1)
+                (recv_message, _type) = q.receive(timeout, 2)
             else:
                 i.P(timeout)
                 m.V()
-                (recv_message, _type) = q.receive(block, 1)
-                q.send(send_message, block, 2)
+                (recv_message, _type) = q.receive(timeout, 1)
+                q.send(send_message, timeout, 2)
             print('length: %i' % len(recv_message))
             sys.stdout.buffer.write(recv_message)
             sys.stdout.buffer.write(b'\n')
             sys.stdout.buffer.flush()
         elif key[0] is not None:
             nocmd = True
+        m.close()
+        i.close()
+        q.close()
         if parser.opts['--remove'] is not None:
             m.remove()
             i.remove()
