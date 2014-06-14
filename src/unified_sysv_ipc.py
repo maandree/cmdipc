@@ -53,14 +53,14 @@ class SharedMemory(sysv_ipc.SharedMemory):
         pass
 
 class MessageQueue(sysv_ipc.MessageQueue):
-    def __init__(self, *args, **kwargs):
-        sysv_ipc.MessageQueue.__init__(self, *args, **kwargs)
+    def __init__(self, key, flags = 0, mode = 0o600, max_messages = 1, max_message_size = 2048):
+        sysv_ipc.MessageQueue.__init__(self, key, flags, mode, max_messages * max_message_size)
         self.send_ = sysv_ipc.MessageQueue.send
         self.recv_ = sysv_ipc.MessageQueue.receive
     def send(self, message, timeout = None, type = 1):
         self.send_(self, message, (timeout is None) or (timeout != 0), type)
     def receive(self, timeout = None, type = 1):
-        self.recv_(self, (timeout is None) or (timeout != 0), type)
+        return self.recv_(self, (timeout is None) or (timeout != 0), type)
     def close(self):
         pass
 

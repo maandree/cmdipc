@@ -47,6 +47,7 @@ parser.add_argumentless(['-h', '-?', '--help'],  0,          'Prints this help m
 parser.add_argumented  (['-k', '--key'],         0, 'KEY',   'The key (SysV) or name (POSIX) of the item')
 parser.add_argumented  (['-m', '--mode'],        0, 'OCTAL', 'The mode for the item')
 parser.add_argumented  (['-s', '--size'],        0, 'SIZE',  'Maximum size for messages')
+parser.add_argumented  (['-z', '--spool'],       0, 'SIZE',  'Maximum number of messages')
 parser.add_argumented  (['-t', '--type'],        0, 'TYPE',  'Message type')
 parser.add_argumented  (['-p', '--priority'],    0, 'PRIO',  'Message priority')
 parser.add_argumented  (['-d', '--delta'],       0, 'DELTA', 'Semaphore value increment')
@@ -91,17 +92,20 @@ try:
         print(ipc.ftok(parser.files[0], int(parser.files[1]), silence_warning = True))
     
     elif parser.opts['--mqueue'] is not None:
-        key, flags, mode, size, type, timeout = None, 0, 0o600, 2048, None, None
+        key, flags, mode, spool, size, type, timeout = None, 0, 0o600, 10, 8192, None, None
+        if not use_posix:
+            spool, size = 1, 2048
         if parser.opts['--nonblocking'] is not None:  timeout = 0
         if parser.opts['--key']         is not None:  key     = ipc.keysep(parser.opts['--key'][0])[0]
         if parser.opts['--create']      is not None:  flags   = ipc.CREAT
         if parser.opts['--exclusive']   is not None:  flags   = ipc.CREAT | ipc.EXCL
         if parser.opts['--mode']        is not None:  mode    = int(parser.opts['--mode'][0], 8)
         if parser.opts['--size']        is not None:  size    = int(parser.opts['--size'][0])
+        if parser.opts['--spool']       is not None:  spool   = int(parser.opts['--spool'][0])
         if parser.opts['--type']        is not None:  type    = int(parser.opts['--type'][0])
         if parser.opts['--priority']    is not None:  type    = int(parser.opts['--priority'][0])
         if parser.opts['--timeout']     is not None:  timeout = float(parser.opts['--timeout'][0])
-        q = ipc.MessageQueue(key, flags, mode, size)
+        q = ipc.MessageQueue(key, flags, mode, spool, size)
         if key is None:
             print('key: %s' % ipc.keycat(q.key))
         nocmd = False
@@ -336,17 +340,20 @@ try:
             sys.exit(1)
     
     elif (not use_posix) and (parser.opts['--rendezvous'] is not None):
-        key, flags, mode, size, timeout = [None, None, None], 0, 0o600, 2048, None
+        key, flags, mode, spool, size, timeout = [None, None, None], 0, 0o600, 2, 8192, None
+        if use_posix:
+            spool, size = 1, 2048
         if parser.opts['--nonblocking'] is not None:  timeout = 0
         if parser.opts['--key']         is not None:  key     = ipc.keysep(parser.opts['--key'][0])
         if parser.opts['--create']      is not None:  flags   = ipc.CREAT
         if parser.opts['--exclusive']   is not None:  flags   = ipc.CREAT | ipc.EXCL
         if parser.opts['--mode']        is not None:  mode    = int(parser.opts['--mode'][0], 8)
+        if parser.opts['--spool']       is not None:  spool   = int(parser.opts['--spool'][0])
         if parser.opts['--size']        is not None:  size    = int(parser.opts['--size'][0])
         if parser.opts['--timeout']     is not None:  timeout = float(parser.opts['--timeout'][0])
         m = ipc.Semaphore(key[0], flags, mode, 1)
         i = ipc.Semaphore(key[1], flags, mode, 0)
-        q = ipc.MessageQueue(key[2], flags, mode, size)
+        q = ipc.MessageQueue(key[2], flags, mode, spool, size)
         if key[0] is None:
             print('key: %s' % ipc.keycat(m.key, i.key, q.key))
         nocmd = False
