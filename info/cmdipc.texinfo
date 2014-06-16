@@ -660,7 +660,9 @@ is fixed to synchronising two processes.
 When two processes meet at a rendezvous
 they exchange a message with eachother.
 Use of rendezvous are indicated by the
-@option{-B} option.
+@option{-R} option. @option{-R} inherits
+the @option{-s} and @option{-z} options
+from @option{-Q}.
 
 A ``System V'' rendezvous is constructed
 from two semaphores and one message queue.
