@@ -52,6 +52,7 @@ Texts. A copy of the license is included in the section entitled
 
 @menu
 * Overview::                        Brief overview of @command{cmdipc}.
+* Invoking::                        Invocation of @command{cmdipc}.
 * GNU Free Documentation License::  Copying and sharing this manual.
 @end menu
 
@@ -60,7 +61,100 @@ Texts. A copy of the license is included in the section entitled
 @node Overview
 @chapter Overview
 
+System V and POSIX interprocess communication
+from the command line. In addition to the primities
+shared memory, message queue and semaphores, this
+tool can from these primitives construct mutexe,
+conditions, barriers, shared locks and rendezvous.
 
+
+
+@node Invoking
+@chapter Invoking
+
+@command{cmdipc} have support for eight types
+of interprocess communication units: message
+queues, semaphores, shared memory, mutexe
+@footnote{Because of the nature of this program
+mutexe are as bit degraded.}, conditions,
+barrers, shared locks and rendezvous. These
+are constructed from either the three System V
+interprocess communication primitives: message
+queues, semaphores and shared memory, or their
+POSIX variants. The type of interprocess
+communication unit to use is selected by the
+follow options, to use the POSIX variant rather
+than the System V variant add the option
+@option{-P} (@option{--posix}).
+
+@table @option
+@item -Q
+@itemx --mqueue
+Message queue.
+
+@item -S
+@itemx --semaphore
+Semaphore.
+
+@item -M
+@itemx --shm
+Shared memory.
+
+@item -X
+@itemx --mutex
+Mutually exclusive. (Mutex)
+
+@item -C
+@itemx --condition
+Condition.
+
+@item -B
+@itemx --barrier
+Barrier.
+
+@item -L
+@itemx --shared-lock
+Shared lock.
+
+@item -R
+@itemx --rendezvous
+Rendezvous.
+@end table
+
+To specify which instance of a unit to use,
+specify its key (not ID) with the @option{-k}
+(@option{--key}) option. If you do not have
+a key, your only option is to create one, but
+you can still create a unit with a specified
+key. To create a unit use the option @option{-c}
+(@option{--create}), this will be successful
+even if the key is already in use, in which
+case the unit will simply be opened. To fail
+if the key is already in use, use the option
+@option{-x} (@option{--exclusive}). @option{-x}
+can be used with or without @option{-c}, it
+is interpretation will does not depend on
+@option{-c}, @option{-c} is implied by
+@option{-x}. To remove a key, use the option
+@option{-r} (@option{--remove}).
+
+There are two additional options that are
+recognised. These cannot be used with any
+other optios.
+
+@table @option
+@item -h
+@itemx --help
+Print a list of all options.
+
+@item -f
+@itemx --ftok PATHNAME ID
+Print a key derived from an existing
+file and a project ID. The project ID
+is a integer between the values 0 and
+255, inclusively. The derived key is
+probable to be non-unique.
+@end table
 
 
 @node GNU Free Documentation License
