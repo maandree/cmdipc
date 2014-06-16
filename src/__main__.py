@@ -384,12 +384,12 @@ try:
         if parser.opts['--timeout']     is not None:  timeout = float(parser.opts['--timeout'][0])
         m = ipc.Semaphore(key[0], flags, mode, 1)
         i = ipc.Semaphore(key[1], flags, mode, 0)
-        q = ipc.MessageQueue(key[2], flags, mode, spool, size)
         if use_posix:
-            p = ipc.Semaphore(key[3], flags, mode, 0)
+            p = ipc.Semaphore(key[2], flags, mode, 0)
+        q = ipc.MessageQueue(key[3 if use_posix else 2], flags, mode, spool, size)
         if key[0] is None:
             if use_posix:
-                print('key: %s' % ipc.keycat(m.key, i.key, q.key, p.key))
+                print('key: %s' % ipc.keycat(m.key, i.key, p.key, q.key))
             else:
                 print('key: %s' % ipc.keycat(m.key, i.key, q.key))
         nocmd = False
@@ -425,15 +425,15 @@ try:
         if parser.opts['--remove'] is not None:
             m.remove()
             i.remove()
-            q.remove()
             if use_posix:
                 p.remove()
+            q.remove()
         elif nocmd:
             m.close()
             i.close()
-            q.close()
             if use_posix:
                 p.close()
+            q.close()
             print('Invalid command given', file = sys.stderr)
             sys.exit(1)
     
