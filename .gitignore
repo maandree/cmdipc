@@ -9,4 +9,8 @@ __pycache__/
 *.py[co]
 *.sw[op]
 *.bak
+*.pdf
+*.ps
+*.dvi
+*.info
 
