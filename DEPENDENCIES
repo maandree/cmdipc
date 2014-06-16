@@ -5,3 +5,19 @@ RUNTIME DEPENDENCIES
     python-sysv_ipc
     argparser-python
 
+
+BUILD DEPENDENCIES
+
+    make
+    coreutils
+    sed
+    zip
+    texinfo (for manuals)
+    texlive-core (for pdf, ps, dvi manuals)
+
+
+INSTALL DEPENDENCIES
+
+    make
+    coreutils
+
