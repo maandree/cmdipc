@@ -380,10 +380,73 @@ write to the memory.
 @node Mutexe
 @chapter Mutexe
 
+Mutexe are implemented using semaphores.
+Actually, because of inherit limitations,
+mutexe are binary semaphores. These are
+fairly primitive and should hopefully
+interoperate nicely with other programs.
+A mutex, with the limitations we have,
+is a construct that lets you enter are
+guarded state that not be entered again,
+even recursively, before it has been left.
+
+The key for a ``System V'' mutex is an
+integer, and the key for a ``POSIX'' mutex
+is an ASCII string with NUL or slash between
+1 character and 254 characters long prefixed
+with a slash.
+
+To enter a guarded state with a mutex,
+use the verb @option{enter}. Then leave
+it with @option{leave}.
+
 
 
 @node Conditions
 @chapter Conditions
+
+A condition is a mutex support for
+signalling. They are implemented using
+three semaphores. Just like with mutexe,
+you enter and leave guarded states with
+conditions. But conditions also allow
+to temporarily leave this state and
+wait for a signal continue and the
+re-enter the guarded state when it is
+not occupied. A signal, called
+notification, can only be sent from
+within a guarded state.
+
+The key for a ``System V'' condition is a
+integer-trio delimited by full stops. The
+key for a ``POSIX'' condition is a
+juxtaposition of three an ASCII strings:
+no NUL or slash, between 1 character and
+254 characters long, and prefixed with a
+slash.
+
+To enter a guarded state with a condition,
+use the verb @option{enter}. Then leave
+it with @option{leave}. The verbs
+@option{wait}, @option{notify} and
+@option{broadcast} can only be used
+after @option{enter} has been used but
+before @option{leave}. @option{wait}
+temporarily leaves the guarded state
+and wait for a notification. A notification
+can be sent with @option{notify}.
+@option{notify} will send a notify to
+exactly one waiting peer. If there is
+not peer waiting, the notification will
+be stored for the next time @option{wait}
+is used. @option{notify} cannot block.
+If you want to send a signal to currently
+waiting peers you can instead use the
+verb @option{broadcast}. Alternatively
+you can use @option{notify all} (two
+command line arguments) perform a
+@option{broadcast} if there are any
+waiting peers, and otherwise @option{wait}.
 
 
 
