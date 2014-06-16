@@ -186,6 +186,16 @@ is currently occupied and cannot be
 used without waiting for at most
 @code{SECONDS} seconds.
 
+For a non primitive unit, the
+time to live is reset when it enters
+its next state. This could mean
+that it could timeout anywhere
+between the specifed time and
+n times the specifed time when
+n is the number of steps in the
+action that can block, which with
+the current units is at most 3.
+
 @item -m
 @itemx --mode OCTAL
 Permission bits for the created
@@ -452,6 +462,30 @@ waiting peers, and otherwise @option{wait}.
 
 @node Barriers
 @chapter Barriers
+
+A barrier is a synchronisation primitive
+that can be used to make sure the a number
+of process continue their work at the same
+time and do not fall out of sync with
+eachother. A barrier blocks until a select
+number of processes have reached it and the
+lets all of those processes continue. It
+does only have one verb: @option{enter}.
+
+A ``System V'' barrier is constructed from
+two semaphores. A ``POSIX'' barrier is
+constructed from three semaphores. This
+difference is due to the lack of the
+@code{Z} for POSIX semaphores.
+
+The key for a ``System V'' barrier is
+a integer-duo delimited by a full stop.
+The key for a ``POSIX'' barrier is a
+juxtaposition of three an ASCII strings:
+no NUL or slash, between 1 character and
+254 characters long, and prefixed with a
+slash.
+
 
 
 
