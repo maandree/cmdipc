@@ -405,7 +405,7 @@ it with @option{leave}.
 @node Conditions
 @chapter Conditions
 
-A condition is a mutex support for
+A condition is a mutex with support for
 signalling. They are implemented using
 three semaphores. Just like with mutexe,
 you enter and leave guarded states with
@@ -457,6 +457,55 @@ waiting peers, and otherwise @option{wait}.
 
 @node Shared Locks
 @chapter Shared Locks
+
+A shared lock is a mutex support for
+two types of locks: shared and exclusive.
+They are implemented using three semaphores.
+Mutexe are can be reduced from shared lock
+by only using exclusive locking. Exclusive
+locking allows only on program to enter
+a guarded state. Shared locks introduce
+shared locking works the same why but any
+number of programs can be in this state
+concurrently. The purpose of the shared
+locking is to block exclusive locking.
+If you for example are reading and writing
+to a file or shared memory, you would
+apply an exclusive lock if you want to
+be able to modify the content of the
+memory and a shared lock if you only
+which to be able to read it. This
+guarantees both that two processes will
+edit the memory at the same time and
+cause corruption, and that not process
+will modify the memory while another
+process is reading it, while allowing
+multiple processes to read the memory
+at the same time..
+
+The key for a ``System V'' shared lock is
+a integer-trio delimited by full stops.
+The key for a ``POSIX'' shared lock is a
+juxtaposition of three an ASCII strings:
+no NUL or slash, between 1 character and
+254 characters long, and prefixed with a
+slash.
+
+There are four verbs for shared locks:
+
+@table @option
+@item shared lock
+Apply shared locking.
+
+@item exclusive lock
+Apply exclusive locking.
+
+@item shared unlock
+Release shared locking.
+
+@item exclusive unlock
+Release exclusive locking.
+@end table
 
 
 
