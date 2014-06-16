@@ -53,6 +53,14 @@ Texts. A copy of the license is included in the section entitled
 @menu
 * Overview::                        Brief overview of @command{cmdipc}.
 * Invoking::                        Invocation of @command{cmdipc}.
+* Message Queues::                  Using message queue
+* Semaphores::                      Using semaphores
+* Shared Memory::                   Using shared memory
+* Mutexe::                          Using mutexe
+* Conditions::                      Using conditions
+* Barriers::                        Using barriers
+* Shared Locks::                    Using shared locks
+* Rendezvous::                      Using rendezvous
 * GNU Free Documentation License::  Copying and sharing this manual.
 @end menu
 
@@ -153,8 +161,245 @@ Print a key derived from an existing
 file and a project ID. The project ID
 is a integer between the values 0 and
 255, inclusively. The derived key is
-probable to be non-unique.
+probable to be non-unique. This is a
+System V IPC function, and is not
+available, and are not necessary, for
+POSIX IPC.
 @end table
+
+The following options are recognised
+for interprocess communication units.
+
+@table @option
+@item -n
+@itemx --nonblocking
+Fail with exit value 2 if the unit
+is currently occupied and cannot be
+used without waiting.
+Not available for shared memory.
+
+@item -b
+@itemx --timeout SECONDS
+Not available for shared memory.
+Fail with exit value 2 if the unit
+is currently occupied and cannot be
+used without waiting for at most
+@code{SECONDS} seconds.
+
+@item -m
+@itemx --mode OCTAL
+Permission bits for the created
+unit.
+@end table
+
+
+
+
+@node Message Queues
+@chapter Message Queues
+
+Message queues are primitives and play well
+with other programs. Use of message queues
+are indicated by the @option{-Q} option.
+Message queues is a way to send short messages
+between program.
+
+The key for a System V message queue is an
+integer, and the key for a POSIX message queue
+is an ASCII string with NUL or slash between
+1 character and 254 characters long prefixed
+with a slash.
+
+Recognised options for System V message queues:
+
+@table @option
+@item -s
+@itemx --size SIZE
+The size of the queue. This is the total
+length of all message that can be fit into
+the queue before it starts blocking.
+
+@item -t
+@itemx --type TYPE
+When sending, a positive integer of the
+type associated with the message.
+
+When receiving, this allows you to
+control which types of messages are
+received. Zero means that any type is
+accepted, a positive value means that
+only the indicated type is allowed.
+If the value is negative, the first
+message of the lowest type that is
+at most the absolute value of the
+specifed value is received.
+@end table
+
+Recognised options for POSIX message queues:
+
+@table @option
+@item -s
+@itemx --size SIZE
+The maximum size of messages in the queue.
+
+@item -z
+@itemx --spool SIZE
+The size of the queue. This is the number
+of messages that can be fit into the queue
+before it starts blocking.
+
+@item -p
+@itemx --priority NASTYNESS
+The priority allows you to order messages
+in the queue. The highest priority message
+is received first. By default, messages
+are sent at the lowest priority, that is
+zero.
+@end table
+
+To receive a message, add the verb
+@option{receive}. To send a message,
+add the verb @option{send} followed
+by the message to send.
+
+
+
+@node Semaphores
+@chapter Semaphores
+
+Semaphores are primitives and play well
+with other programs. Use of semaphores
+are indicated by the @option{-S} option.
+Semaphores are primitive concurrency units
+that be used for many different things.
+Basically, a semaphore is an atomic counter
+that is never allowed to go below zero.
+
+The key for a System V semaphores is an
+integer, and the key for a POSIX semaphores
+is an ASCII string with NUL or slash between
+1 character and 254 characters long prefixed
+with a slash.
+
+The following options are recognised
+for semaphores:
+
+@table @option
+@item -i
+@itemx --initial VALUE
+You can select the value a semaphore should
+have when it is created. By default the value
+is zero.
+
+@item -d
+@itemx --delta DIFFERENCE
+When increasing or decreasing the value of
+the semaphore @option{--delta} can be used
+to select how much the value should change
+with. By default this is 1. Semaphores are
+atomic, you are guaranteed to either change
+the value exactly as much as specified or
+not all at.
+@end table
+
+The verbs @option{v} and @option{p} are
+used to increase or decrease the value of
+the semaphore, respectively. You can also
+set the exact value of the semaphore with
+the @option{set} verb which should be
+followed directly by the desired value.
+To read the current value use the verb
+@option{read}. @option{p} will block if
+the value of the semaphore would otherwise
+go below zero. You can also wait for the
+value of the semaphore to reach zero
+by using the @option{z} verb. POSIX
+semaphores does not have built in support
+for @option{z}, therefore when POSIX
+semaphores are used, the semaphore will
+be used as a spinlock. Keep in mind that
+spinlock are often suboptimal and it can
+miss that the semaphore's value reaches
+zero if it for a very short amount of
+time.
+
+
+
+@node Shared Memory
+@chapter Shared Memory
+
+Shared memory are primitives and play well
+with other programs. Use of shared memory
+are indicated by the @option{-M} option.
+Shared memory is a form of abstract file
+that can be used to store raw data between
+programs. It is highly recommended to create
+shared memory before any program starts
+using it.
+
+The key for a System V shared memory is an
+integer, and the key for a POSIX shared memory
+is an ASCII string with NUL or slash between
+1 character and 254 characters long prefixed
+with a slash.
+
+The following options are recognised
+for shared memory:
+
+@table @option
+@item -s
+@itemx --size
+When you create a shared memory you
+most specify how large, in bytes, the
+memory allocation should be. KB, MB,
+etc. are not recognised, only bytes.
+
+@item -l
+@itemx --length
+When you read shared memory you can
+specift how many bytes should be read.
+If this is left unspecified the entire
+shared memory, starting at the the
+selected offset, will be read.
+
+@item -o
+@itemx --offset
+When reading and writing shared memory,
+you specify how many bytes into the
+memory that the reading or writing should
+take place. By default the offset is zero.
+@end table
+
+To read the shared memory, use the verb
+@option{read}. To write, use the verb
+@option{write} followed by the data to
+write to the memory.
+
+
+
+@node Mutexe
+@chapter Mutexe
+
+
+
+@node Conditions
+@chapter Conditions
+
+
+
+@node Barriers
+@chapter Barriers
+
+
+
+@node Shared Locks
+@chapter Shared Locks
+
+
+
+@node Rendezvous
+@chapter Rendezvous
+
 
 
 @node GNU Free Documentation License
