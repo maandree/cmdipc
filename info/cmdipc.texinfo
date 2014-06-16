@@ -399,6 +399,8 @@ A mutex, with the limitations we have,
 is a construct that lets you enter are
 guarded state that not be entered again,
 even recursively, before it has been left.
+Use of mutexe are indicated by the
+@option{-X} option.
 
 The key for a ``System V'' mutex is an
 integer, and the key for a ``POSIX'' mutex
@@ -426,11 +428,13 @@ re-enter the guarded state when it is
 not occupied. A signal, called
 notification, can only be sent from
 within a guarded state.
+Use of conditions are indicated by the
+@option{-C} option.
 
 The key for a ``System V'' condition is a
 integer-trio delimited by full stops. The
 key for a ``POSIX'' condition is a
-juxtaposition of three an ASCII strings:
+juxtaposition of three ASCII strings:
 no NUL or slash, between 1 character and
 254 characters long, and prefixed with a
 slash.
@@ -471,6 +475,15 @@ eachother. A barrier blocks until a select
 number of processes have reached it and the
 lets all of those processes continue. It
 does only have one verb: @option{enter}.
+The threshold, that is the number of
+process that are synchronised, is specified
+by the first non-option argument. If
+@option{enter} is used, the threshold is
+specified before @option{enter}. The
+threshold most be specified both at
+construction and at usage.
+Use of barriers are indicated by the
+@option{-B} option.
 
 A ``System V'' barrier is constructed from
 two semaphores. A ``POSIX'' barrier is
@@ -481,11 +494,10 @@ difference is due to the lack of the
 The key for a ``System V'' barrier is
 a integer-duo delimited by a full stop.
 The key for a ``POSIX'' barrier is a
-juxtaposition of three an ASCII strings:
+juxtaposition of three ASCII strings:
 no NUL or slash, between 1 character and
 254 characters long, and prefixed with a
 slash.
-
 
 
 
@@ -515,12 +527,14 @@ cause corruption, and that not process
 will modify the memory while another
 process is reading it, while allowing
 multiple processes to read the memory
-at the same time..
+at the same time.
+Use of shared locks are indicated by the
+@option{-L} option.
 
 The key for a ``System V'' shared lock is
 a integer-trio delimited by full stops.
 The key for a ``POSIX'' shared lock is a
-juxtaposition of three an ASCII strings:
+juxtaposition of three ASCII strings:
 no NUL or slash, between 1 character and
 254 characters long, and prefixed with a
 slash.
@@ -545,6 +559,29 @@ Release exclusive locking.
 
 @node Rendezvous
 @chapter Rendezvous
+
+A rendezvous is like barrier, except it
+is fixed to synchronising two processes.
+When two processes meet at a rendezvous
+they exchange a message with eachother.
+Use of rendezvous are indicated by the
+@option{-B} option.
+
+A ``System V'' rendezvous is constructed
+from two semaphores and one message queue.
+A ``POSIX'' rendezvous is constructed from
+three semaphores and one message queue.
+This difference is due to POSIX message
+queues having priorities instead of types
+for messages.
+
+The key for a ``System V'' rendezvous is
+a integer-trio delimited by full stops.
+The key for a ``POSIX'' shared lock is a
+juxtaposition of four ASCII strings:
+no NUL or slash, between 1 character and
+254 characters long, and prefixed with a
+slash.
 
 
 
