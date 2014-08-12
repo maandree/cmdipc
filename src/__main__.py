@@ -254,9 +254,7 @@ try:
             sys.exit(1)
     
     elif parser.opts['--barrier'] is not None:
-        key, flags, mode, timeout = [None, None], 0, 0o600, None
-        if use_posix:
-            key = [None, None, None]
+        key, flags, mode, timeout = [None, None, None], 0, 0o600, None
         if parser.opts['--nonblocking'] is not None:  timeout = 0
         if parser.opts['--key']         is not None:  key     = ipc.keysep(parser.opts['--key'][0])
         if parser.opts['--create']      is not None:  flags   = ipc.CREAT
@@ -273,8 +271,9 @@ try:
         if not use_posix:
             s = ipc.Semaphore(key[0], flags, mode, threshold)
             m = ipc.Semaphore(key[1], flags, mode, 1)
+            c = ipc.Semaphore(key[2], flags, mode, 0)
             if key[0] is None:
-                print('key: %s' % ipc.keycat(s.key, m.key))
+                print('key: %s' % ipc.keycat(s.key, m.key, c.key))
         else:
             x = ipc.Semaphore(key[0], flags, mode, 1)
             c = ipc.Semaphore(key[1], flags, mode, 0)
@@ -287,8 +286,10 @@ try:
                 s.P(timeout)
                 s.Z(timeout)
                 m.P()
-                if s.value == 0:
+                c.V()
+                if c.value == threshold:
                     s.set_value(threshold)
+                    c.set_value(0)
                 m.V()
             else:
                 x.P(timeout)

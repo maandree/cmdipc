@@ -545,13 +545,14 @@ slash.
 @cartouche
 @example
 [sysv] create:
-    (s, m) := (S(threshold), S(1))
+    (s, mm c) := (S(threshold), S(1), S(0))
 
 [sysv] enter:
     P(s), Z(s)
-    P(m)
-    if s.value = 0:
+    P(m), V(c)
+    if c.value = threshold:
         s.value := threshold
+        c.value := 0
     V(m)
 
 [posix] create:
