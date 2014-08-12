@@ -549,10 +549,10 @@ slash.
 
 [sysv] enter:
     P(s), Z(s)
-    if P(m, nonblocking) does not fail:
-        if s.value = 0:
-             s.value := threshold
-        V(m)
+    P(m)
+    if s.value = 0:
+        s.value := threshold
+    V(m)
 
 [posix] create:
     (x, c, q) := (S(1), S(0), S(0))

@@ -286,14 +286,10 @@ try:
             if not use_posix:
                 s.P(timeout)
                 s.Z(timeout)
-                try:
-                    m.P(0)
-                except ipc.BusyError:
-                    pass
-                else:
-                    if s.value == 0:
-                        s.set_value(threshold)
-                    m.V()
+                m.P()
+                if s.value == 0:
+                    s.set_value(threshold)
+                m.V()
             else:
                 x.P(timeout)
                 c.V()
