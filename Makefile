@@ -68,23 +68,23 @@ info: cmdipc.info
 .PHONY: pdf
 pdf: cmdipc.pdf
 %.pdf: info/%.texinfo info/fdl.texinfo
-	cd obj ; yes X | texi2pdf ../$<
-	mkdir -p obj
-	mv obj/$@ $@
+	@mkdir -p obj/pdf
+	cd obj/pdf ; yes X | texi2pdf ../../$<
+	mv obj/pdf/$@ $@
 
 .PHONY: dvi
 dvi: cmdipc.dvi
 %.dvi: info/%.texinfo info/fdl.texinfo
-	cd obj ; yes X | $(TEXI2DVI) ../$<
-	mkdir -p obj
-	mv obj/$@ $@
+	@mkdir -p obj/dvi
+	cd obj/dvi ; yes X | $(TEXI2DVI) ../../$<
+	mv obj/dvi/$@ $@
 
 .PHONY: ps
 ps: cmdipc.ps
 %.ps: info/%.texinfo info/fdl.texinfo
-	mkdir -p obj
-	cd obj ; yes X | texi2pdf --ps ../$<
-	mv obj/$@ $@
+	@mkdir -p obj/ps
+	cd obj/ps ; yes X | texi2pdf --ps ../../$<
+	mv obj/ps/$@ $@
 
 
 
