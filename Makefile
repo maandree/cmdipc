@@ -65,28 +65,28 @@ doc: info pdf dvi ps
 
 .PHONY: info
 info: bin/cmdipc.info
-bin/%.info: info/%.texinfo info/fdl.texinfo
+bin/%.info: doc/info/%.texinfo doc/info/fdl.texinfo
 	@mkdir -p bin
 	makeinfo $<
 	mv $*.info $@
 
 .PHONY: pdf
 pdf: bin/cmdipc.pdf
-bin/%.pdf: info/%.texinfo info/fdl.texinfo
+bin/%.pdf: doc/info/%.texinfo doc/info/fdl.texinfo
 	@mkdir -p obj/pdf bin
 	cd obj/pdf ; yes X | texi2pdf ../../$<
 	mv obj/pdf/$*.pdf $@
 
 .PHONY: dvi
 dvi: bin/cmdipc.dvi
-bin/%.dvi: info/%.texinfo info/fdl.texinfo
+bin/%.dvi: doc/info/%.texinfo doc/info/fdl.texinfo
 	@mkdir -p obj/dvi bin
 	cd obj/dvi ; yes X | $(TEXI2DVI) ../../$<
 	mv obj/dvi/$*.dvi $@
 
 .PHONY: ps
 ps: bin/cmdipc.ps
-bin/%.ps: info/%.texinfo info/fdl.texinfo
+bin/%.ps: doc/info/%.texinfo doc/info/fdl.texinfo
 	@mkdir -p obj/ps bin
 	cd obj/ps ; yes X | texi2pdf --ps ../../$<
 	mv obj/ps/$*.ps $@
