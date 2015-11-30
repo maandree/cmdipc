@@ -56,7 +56,7 @@ Texts. A copy of the license is included in the section entitled
 * Message Queues::                  Using message queue
 * Semaphores::                      Using semaphores
 * Shared Memory::                   Using shared memory
-* Mutexe::                          Using mutexe
+* Mutexes::                         Using mutual exclusives
 * Conditions::                      Using conditions
 * Barriers::                        Using barriers
 * Shared Locks::                    Using shared locks
@@ -72,7 +72,7 @@ Texts. A copy of the license is included in the section entitled
 System V and POSIX interprocess communication
 from the command line. In addition to the primities
 shared memory, message queue and semaphores, this
-tool can from these primitives construct mutexe,
+tool can from these primitives construct mutexes,
 conditions, barriers, shared locks and rendezvous.
 
 
@@ -82,9 +82,9 @@ conditions, barriers, shared locks and rendezvous.
 
 @command{cmdipc} have support for eight types
 of interprocess communication units: message
-queues, semaphores, shared memory, mutexe
-@footnote{Because of the nature of this program
-mutexe are as bit degraded.}, conditions,
+queues, semaphores, shared memory, mutexes
+@footnote{Because of the nature of this program,
+mutexes are a bit degraded.}, conditions,
 barrers, shared locks and rendezvous. These
 are constructed from either the three System V
 interprocess communication primitives: message
@@ -387,19 +387,19 @@ write to the memory.
 
 
 
-@node Mutexe
-@chapter Mutexe
+@node Mutexes
+@chapter Mutexes
 
-Mutexe are implemented using semaphores.
+Mutexes are implemented using semaphores.
 Actually, because of inherit limitations,
-mutexe are binary semaphores. These are
+mutexes are binary semaphores. These are
 fairly primitive and should hopefully
 interoperate nicely with other programs.
 A mutex, with the limitations we have,
 is a construct that lets you enter are
 guarded state that not be entered again,
 even recursively, before it has been left.
-Use of mutexe are indicated by the
+Use of mutexes are indicated by the
 @option{-X} option.
 
 The key for a ``System V'' mutex is an
@@ -433,7 +433,7 @@ leave:
 
 A condition is a mutex with support for
 signalling. They are implemented using
-three semaphores. Just like with mutexe,
+three semaphores. Just like with mutexes,
 you enter and leave guarded states with
 conditions. But conditions also allow
 to temporarily leave this state and
@@ -577,7 +577,7 @@ slash.
 A shared lock is a mutex support for
 two types of locks: shared and exclusive.
 They are implemented using three semaphores.
-Mutexe are can be reduced from shared lock
+Mutexes are can be reduced from shared lock
 by only using exclusive locking. Exclusive
 locking allows only on program to enter
 a guarded state. Shared locks introduce
