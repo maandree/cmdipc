@@ -1,6 +1,6 @@
 _/
-bin/
-obj/
+/bin/
+/obj/
 __pycache__/
 \#*\#
 .*
@@ -9,6 +9,7 @@ __pycache__/
 *.py[co]
 *.sw[op]
 *.bak
+*.new
 *.pdf
 *.ps
 *.dvi
