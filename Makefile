@@ -5,38 +5,41 @@
 
 
 # The package path prefix, if you want to install to another root, set DESTDIR to that root
-PREFIX ?= /usr
+PREFIX = /usr
 # The command path excluding prefix
-BIN ?= /bin
+BIN = /bin
 # The resource path excluding prefix
-DATA ?= /share
+DATA = /share
 # The command path including prefix
-BINDIR ?= $(PREFIX)$(BIN)
+BINDIR = $(PREFIX)$(BIN)
 # The resource path including prefix
-DATADIR ?= $(PREFIX)$(DATA)
+DATADIR = $(PREFIX)$(DATA)
 # The generic documentation path including prefix
-DOCDIR ?= $(DATADIR)/doc
+DOCDIR = $(DATADIR)/doc
 # The info manual documentation path including prefix
-INFODIR ?= $(DATADIR)/info
+INFODIR = $(DATADIR)/info
 # The license base path including prefix
-LICENSEDIR ?= $(DATADIR)/licenses
+LICENSEDIR = $(DATADIR)/licenses
 
 # Python 3 command to use in shebangs
-SHEBANG ?= /usr/bin/env python3
+SHEBANG = /usr/bin/env python3
 # The name of the command as it should be installed
-COMMAND ?= cmdipc
+COMMAND = cmdipc
 # The name of the package as it should be installed
-PKGNAME ?= cmdipc
+PKGNAME = cmdipc
 
 
 
 # Build rules
 
 .PHONY: default
-default: command info
+default: base info
 
 .PHONY: all
-all: command doc
+all: base doc
+
+.PHONY: base
+base: command
 
 .PHONY: command
 command: bin/cmdipc
@@ -61,30 +64,32 @@ obj/cmdipc.zip: src/*.py
 doc: info pdf dvi ps
 
 .PHONY: info
-info: cmdipc.info
-%.info: info/%.texinfo info/fdl.texinfo
+info: bin/cmdipc.info
+bin/%.info: info/%.texinfo info/fdl.texinfo
+	@mkdir -p bin
 	makeinfo $<
+	mv $*.info $@
 
 .PHONY: pdf
-pdf: cmdipc.pdf
-%.pdf: info/%.texinfo info/fdl.texinfo
-	@mkdir -p obj/pdf
+pdf: bin/cmdipc.pdf
+bin/%.pdf: info/%.texinfo info/fdl.texinfo
+	@mkdir -p obj/pdf bin
 	cd obj/pdf ; yes X | texi2pdf ../../$<
-	mv obj/pdf/$@ $@
+	mv obj/pdf/$*.pdf $@
 
 .PHONY: dvi
-dvi: cmdipc.dvi
-%.dvi: info/%.texinfo info/fdl.texinfo
-	@mkdir -p obj/dvi
+dvi: bin/cmdipc.dvi
+bin/%.dvi: info/%.texinfo info/fdl.texinfo
+	@mkdir -p obj/dvi bin
 	cd obj/dvi ; yes X | $(TEXI2DVI) ../../$<
-	mv obj/dvi/$@ $@
+	mv obj/dvi/$*.dvi $@
 
 .PHONY: ps
-ps: cmdipc.ps
-%.ps: info/%.texinfo info/fdl.texinfo
-	@mkdir -p obj/ps
+ps: bin/cmdipc.ps
+bin/%.ps: info/%.texinfo info/fdl.texinfo
+	@mkdir -p obj/ps bin
 	cd obj/ps ; yes X | texi2pdf --ps ../../$<
-	mv obj/ps/$@ $@
+	mv obj/ps/$*.ps $@
 
 
 
@@ -99,17 +104,25 @@ install-all: install-base install-doc
 # Install base rules
 
 .PHONY: install-base
-install-base: install-command install-license
+install-base: install-command install-copyright
 
 .PHONY: install-command
 install-command: bin/cmdipc
 	install -dm755 -- "$(DESTDIR)$(BINDIR)"
 	install -m755 $< -- "$(DESTDIR)$(BINDIR)/$(COMMAND)"
 
+.PHONY: install-copyright
+install-copyright: install-copying install-license
+
+.PHONY: install-copying
+install-copying:
+	install -dm755 -- "$(DESTDIR)$(LICENSEDIR)/$(PKGNAME)"
+	install -m644 COPYING -- "$(DESTDIR)$(LICENSEDIR)/$(PKGNAME)"
+
 .PHONY: install-license
 install-license:
 	install -dm755 -- "$(DESTDIR)$(LICENSEDIR)/$(PKGNAME)"
-	install -m644 COPYING LICENSE -- "$(DESTDIR)$(LICENSEDIR)/$(PKGNAME)"
+	install -m644 LICENSE -- "$(DESTDIR)$(LICENSEDIR)/$(PKGNAME)"
 
 # Install documentation
 
@@ -156,5 +169,5 @@ uninstall:
 
 .PHONY: all
 clean:
-	-rm -r bin obj *.{pdf,ps,dvi,info}
+	-rm -r bin obj
 
