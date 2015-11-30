@@ -1,5 +1,64 @@
-System V and POSIX interprocess communication
-from the command line. In addition to the primities
-shared memory, message queue and semaphores, this
-tool can from these primitives construct mutexe,
-conditions, barriers, shared locks and rendezvous.
+NAME
+	cmdipc - System V and POSIX IPC from the command line
+
+SYNOPSIS
+	cmdipc -Q [OPTION]... [receive]
+	cmdipc -Q [OPTION]... send [--] MESSAGE
+	cmdipc -S [OPTION]... [p|v|z|read]
+	cmdipc -S [OPTION]... set VALUE
+	cmdipc -M [OPTION]... [read]
+	cmdipc -M [OPTION]... write [--] DATA
+	cmdipc -X [OPTION]... [enter|leave]
+	cmdipc -C [OPTION]... [enter|leave|wait]
+	cmdipc -C [OPTION]... notify [all]
+	cmdipc -C [OPTION]... broadcast
+	cmdipc -B [OPTION]... THRESHOLD [enter]
+	cmdipc -B [OPTION]... --remove
+	cmdipc -L [OPTION]... [shared [un]lock]
+	cmdipc -L [OPTION]... exclusive [un]lock
+	cmdipc -R [OPTION]... [--] [MESSAGE]
+	cmdipc --ftok PATH ID
+
+DESCRIPTION
+	System V and POSIX interprocess communication from the command
+	line. In addition to the primities shared memory, message queue
+	and semaphores, this tool can from these primitives construct
+	mutexes, conditions, barriers, shared locks and rendezvous.
+
+OPTIONS
+	-h, --help              Prints this help message and exits
+	-k, --key KEY           The key (SysV) or name (POSIX) of the item
+	-m, --mode OCTAL        The mode for the item
+	-s, --size SIZE         Maximum size for messages
+	-z, --spool SIZE        Maximum number of messages
+	-t, --type TYPE         Message type
+	-p, --priority PRIO     Message priority
+	-d, --delta DELTA       Semaphore value increment
+	-i, --initial VALUE     Initial semaphore value
+	-b, --timeout SECS      Semaphore V/Z timeout, in seconds
+	-l, --length LEN        Shared memory read length
+	-o, --offset OFF        Shared memory read/write offset
+	-r, --remove            Remove unit
+	-n, --nonblocking       Do not block, exit with 2 if busy
+	-c, --create            Create item
+	-x, --exclusive         Create exclusive item
+	-f, --ftok              Create unit ID, possibly non-unique
+	-P, --posix             Use POSIX IPC rather than System V IPC
+	-Q, --mqueue            Use message queue
+	-S, --semaphore         Use semaphore
+	-M, --shm               Use shared memory
+	-X, --mutex             Use mutex
+	-C, --condition         Use condition
+	-B, --barrier           Use barrier
+	-L, --shared-lock       Use shared lock
+	-R, --rendezvous        Use rendezvous
+
+RATIONALE
+	Interprocess communication in the command line enables much
+	more interesting use of shell scripts.
+
+SEE ALSO
+	bus(1), ipcs(1), ipcrm(1), ipcmk(1), flock(1), mkfifo(1), ipcmd
+
+	Full documentation available locally via: info '(cmdipc)'
+
