@@ -1,0 +1,187 @@
+.TH CMDIPC 1 CMDIPC
+.SH NAME
+cmdipc - System V and POSIX IPC from the command line
+.SH SYNOPSIS
+.B cmdipc
+\-Q
+.RI [ OPTION ]...\ [receive]
+.br
+.B cmdipc
+\-Q
+.RI [ OPTION ]...\ send
+[\-\-]
+.I MESSAGE
+.br
+.B cmdipc
+\-S
+.RI [ OPTION ]...\ [p|v|z|read]
+.br
+.B cmdipc
+\-S
+.RI [ OPTION ]...\ set
+.I VALUE
+.br
+.B cmdipc
+\-M
+.RI [ OPTION ]...\ [read]
+.br
+.B cmdipc
+\-M
+.RI [ OPTION ]...\ write
+[\-\-]
+.I DATA
+.br
+.B cmdipc
+\-X
+.RI [ OPTION ]...\ [enter|leave]
+.br
+.B cmdipc
+\-C
+.RI [ OPTION ]...\ [enter|leave|wait]
+.br
+.B cmdipc
+\-C
+.RI [ OPTION ]...\ notify
+[all]
+.br
+.B cmdipc
+\-C
+.RI [ OPTION ]...\ broadcast
+.br
+.B cmdipc
+\-B
+.RI [ OPTION ]...\  THRESHOLD
+[enter]
+.br
+.B cmdipc
+\-B
+.RI [ OPTION ]...\ --remove
+.br
+.B cmdipc
+\-L
+.RI [ OPTION ]...\ [shared\ [un]lock]
+.br
+.B cmdipc
+\-L
+.RI [ OPTION ]...\ exclusive\ [un]lock
+.br
+.B cmdipc
+\-R
+.RI [ OPTION ]...\ [\-\-]
+.RI [ MESSAGE ]
+.br
+.B cmdipc
+\-\-ftok
+.I PATH
+.I ID
+.SH DESCRIPTION
+System V and POSIX interprocess communication from the command
+line. In addition to the primities shared memory, message queue
+and semaphores, this tool can from these primitives construct
+mutexes, conditions, barriers, shared locks and rendezvous.
+.SH OPTIONS
+.TP
+.BR \-h ,\  \-\-help
+Prints this help message and exits.
+.TP
+.BR \-k ,\  \-\-key \ \fIKEY\fP
+The key (SysV) or name (POSIX) of the item.
+.TP
+.BR \-m ,\  \-\-mode \ \fIOCTAL\fP
+The mode for the item.
+.TP
+.BR \-s ,\  \-\-size \ \fISIZE\fP
+Maximum size for messages.
+.TP
+.BR \-z ,\  \-\-spool \ \fISIZE\fP
+Maximum number of messages.
+.TP
+.BR \-t ,\  \-\-type \ \fITYPE\fP
+Message type.
+.TP
+.BR \-p ,\  \-\-priority \ \fIPRIO\fP
+Message priority.
+.TP
+.BR \-d ,\  \-\-delta \ \fIDELTA\fP
+Semaphore value increment.
+.TP
+.BR \-i ,\  \-\-initial \ \fIVALUE\fP
+Initial semaphore value.
+.TP
+.BR \-b ,\  \-\-timeout \ \fISECS\fP
+Semaphore V/Z timeout, in seconds.
+.TP
+.BR \-l ,\  \-\-length \ \fILEN\fP
+Shared memory read length.
+.TP
+.BR \-o ,\  \-\-offset \ \fIOFF\fP
+Shared memory read/write offset.
+.TP
+.BR \-r ,\  \-\-remove
+Remove unit.
+.TP
+.BR \-n ,\  \-\-nonblocking
+Do not block, exit with 2 if busy.
+.TP
+.BR \-c ,\  \-\-create
+Create item.
+.TP
+.BR \-x ,\  \-\-exclusive
+Create exclusive item.
+.TP
+.BR \-f ,\  \-\-ftok
+Create unit ID, possibly non-unique.
+.TP
+.BR \-P ,\  \-\-posix
+Use POSIX IPC rather than System V IPC.
+.TP
+.BR \-Q ,\  \-\-mqueue
+Use message queue.
+.TP
+.BR \-S ,\  \-\-semaphore
+Use semaphore.
+.TP
+.BR \-M ,\  \-\-shm
+Use shared memory.
+.TP
+.BR \-X ,\  \-\-mutex
+Use mutex.
+.TP
+.BR \-C ,\  \-\-condition
+Use condition.
+.TP
+.BR \-B ,\  \-\-barrier
+Use barrier.
+.TP
+.BR \-L ,\  \-\-shared-lock
+Use shared lock.
+.TP
+.BR \-R ,\  \-\-rendezvous
+Use rendezvous.
+.SH RATIONALE
+Interprocess communication in the command line enables much
+more interesting use of shell scripts.
+.SH "SEE ALSO"
+.BR bus (1),
+.BR ipcs (1),
+.BR ipcrm (1),
+.BR ipcmk (1),
+.BR flock (1),
+.BR mkfifo (1),
+.BR ipcmd
+.PP
+Full documentation available locally via: info \(aq(cmdipc)\(aq
+.SH AUTHORS
+Principal author, Mattias Andrée.  See the COPYING file for the full
+list of authors.
+.SH LICENSE
+Copyright \(co 2014, 2015  Mattias Andrée
+.br
+License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.
+.br
+This is free software: you are free to change and redistribute it.
+.br
+There is NO WARRANTY, to the extent permitted by law.
+.SH BUGS
+Please report bugs to https://github.com/maandree/cmdipc/issues or to
+maandree@member.fsf.org

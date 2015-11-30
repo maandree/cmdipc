@@ -18,6 +18,10 @@ DATADIR = $(PREFIX)$(DATA)
 DOCDIR = $(DATADIR)/doc
 # The info manual documentation path including prefix
 INFODIR = $(DATADIR)/info
+# The man page documentation path including prefix
+MANDIR = $(DATADIR)/man
+# The man page section 1 path including prefix
+MAN1DIR = $(MANDIR)/man1
 # The license base path including prefix
 LICENSEDIR = $(DATADIR)/licenses
 
@@ -127,27 +131,32 @@ install-license:
 # Install documentation
 
 .PHONY: install-doc
-install-doc: install-info install-pdf install-ps install-dvi
+install-doc: install-info install-pdf install-ps install-dvi install-man
 
 .PHONY: install-info
-install-info: cmdipc.info
+install-info: bin/cmdipc.info
 	install -dm755 -- "$(DESTDIR)$(INFODIR)"
 	install -m644 $< -- "$(DESTDIR)$(INFODIR)/$(PKGNAME).info"
 
 .PHONY: install-pdf
-install-pdf: cmdipc.pdf
+install-pdf: bin/cmdipc.pdf
 	install -dm755 -- "$(DESTDIR)$(DOCDIR)"
 	install -m644 $< -- "$(DESTDIR)$(DOCDIR)/$(PKGNAME).pdf"
 
 .PHONY: install-ps
-install-ps: cmdipc.ps
+install-ps: bin/cmdipc.ps
 	install -dm755 -- "$(DESTDIR)$(DOCDIR)"
 	install -m644 $< -- "$(DESTDIR)$(DOCDIR)/$(PKGNAME).ps"
 
 .PHONY: install-dvi
-install-dvi: cmdipc.dvi
+install-dvi: bin/cmdipc.dvi
 	install -dm755 -- "$(DESTDIR)$(DOCDIR)"
 	install -m644 $< -- "$(DESTDIR)$(DOCDIR)/$(PKGNAME).dvi"
+
+.PHONY: install-man
+install-man:
+	install -dm755 -- "$(DESTDIR)$(MAN1DIR)"
+	install -m644 doc/man/cmdipc.1 -- "$(DESTDIR)$(MAN1DIR)/$(COMMAND).1"
 
 
 # Uninstall rules
@@ -162,6 +171,7 @@ uninstall:
 	-rm -- "$(DESTDIR)$(DOCDIR)/$(PKGNAME).pdf"
 	-rm -- "$(DESTDIR)$(DOCDIR)/$(PKGNAME).ps"
 	-rm -- "$(DESTDIR)$(DOCDIR)/$(PKGNAME).dvi"
+	-rm -- "$(DESTDIR)$(MAN1DIR)/$(COMMAND).1"
 
 
 
