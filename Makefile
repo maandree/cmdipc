@@ -100,7 +100,7 @@ bin/%.ps: doc/info/%.texinfo doc/info/fdl.texinfo
 # Install rules
 
 .PHONY: install
-install: install-base install-info
+install: install-base install-info install-man
 
 .PHONY: install
 install-all: install-base install-doc
