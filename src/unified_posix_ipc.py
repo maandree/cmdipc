@@ -1,7 +1,7 @@
 # -*- python -*-
 '''
 cmdipc — System V and POSIX IPC from the command line
-Copyright © 2014  Mattias Andrée (maandree@member.fsf.org)
+Copyright © 2014  Mattias Andrée (m@maandree.se)
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
